@@ -3,6 +3,7 @@ import cv2, math, time
 from time import sleep
 import logging
 Tello.LOGGER.setLevel(logging.DEBUG)
+import keyboard
 
 tello = Tello()
 tello.connect(False)
@@ -21,23 +22,23 @@ while True:
     cv2.imshow("drone", img)
 
     key = cv2.waitKey(1) & 0xff
-    if key == 27: # ESC
+    if keyboard.read_key() == 27: # ESC
         break
-    elif key == ord('w'):
+    elif keyboard.read_key() == 'w':
         tello.move_forward(30)
-    elif key == ord('s'):
+    elif keyboard.read_key() == 's':
         tello.move_back(30)
-    elif key == ord('a'):
+    elif keyboard.read_key() == 'a':
         tello.move_left(30)
-    elif key == ord('d'):
+    elif keyboard.read_key() == 'd':
         tello.move_right(30)
-    elif key == ord('e'):
+    elif keyboard.read_key() == 'e':
         tello.rotate_clockwise(30)
-    elif key == ord('q'):
+    elif keyboard.read_key() == 'q':
         tello.rotate_counter_clockwise(30)
-    elif key == ord('r'):
+    elif keyboard.read_key() == 'r':
         tello.move_up(30)
-    elif key == ord('f'):
+    elif keyboard.read_key() == ord('f'):
         tello.move_down(30)
 
 tello.land()
