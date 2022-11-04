@@ -10,9 +10,10 @@ use gtk::
 };
 
 //let const PROJECT_ROOT: &str = "./";
-let mut buttonUsed: bool = false;
 
 fn main() {
+    let mut buttonUsed: bool = false;
+
     let app = Application::builder()
         .application_id("com.plajtacorp.dronogeddon")
         .build();
