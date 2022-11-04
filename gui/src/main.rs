@@ -42,7 +42,7 @@ fn main() {
                     .spawn()
                     .expect("Script failed to run!");
 
-                *buttonUsed = 1;
+                //*buttonUsed = 1;
             } else
             {
                 println!("You already started script!");
