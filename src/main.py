@@ -9,10 +9,10 @@ def buttonPressed():
 
 button = tk.Button
 (
-    text = "Deploy",
-    width = 500,
-    height = 500,
-    command = buttonPressed
+    text="Deploy",
+    width=500,
+    height=500,
+    command=buttonPressed
 );
 
 button.pack()
