@@ -17,13 +17,15 @@ def videoRecorder():
     while keepRecording:
         image_arr = frame_read.frame
         image, results = DetectFace(image_arr)
-        min_x = results.detections[0].location_data.relative_bounding_box.minx
-        min_y = results.detections[0].location_data.relative_bounding_box.miny
-        obj_width = results.detections[0].location_data.relative_bounding_box.width
-        obj_height = results.detections[0].location_data.relative_bounding_box.height
 
-        obj = [min_x*width, min_y*height, obj_width*width, obj_height*height]
-        print(obj)
+        if results.detections:
+            min_x = results.detections[0].location_data.relative_bounding_box.xmin
+            min_y = results.detections[0].location_data.relative_bounding_box.ymin
+            obj_width = results.detections[0].location_data.relative_bounding_box.width
+            obj_height = results.detections[0].location_data.relative_bounding_box.height
+
+            obj = [min_x*width, min_y*height, obj_width*width, obj_height*height]
+            print(obj)
 
         cv2.imshow("drone", image)
         cv2.waitKey(1)
