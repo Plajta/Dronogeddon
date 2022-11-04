@@ -46,25 +46,14 @@ def videoRecorder():
             print(degreeX)
             if degreeX>10:
                 print("pravá")
-                tello.rotate_clockwise(degreeX)
-                sleep(2)
+                tello.rotate_clockwise(round(degreeX/3))
+                sleep(1)
             elif degreeX<-10:
                 print("levá")
-                tello.rotate_counter_clockwise(abs(degreeX))
-                sleep(2)
+                tello.rotate_counter_clockwise(abs(round(degreeX/3)))
+                sleep(1)
             else:
-                if face_size >= 0.8:
-                    tello.move_back(21)
-                    sleep(2)
-                elif face_size >= 0.5:
-                    tello.move_forward(21)
-                    sleep(2)
-                elif face_size >= 0.25:
-                    tello.move_forward(30)
-                    sleep(2)
-                else:
-                    tello.move_forward(50)
-                    sleep(2)
+                print("stred")
                 
 
         cv2.imshow("drone", image_arr)
@@ -89,3 +78,5 @@ def Start():
     keepRecording = False
     cv2.destroyAllWindows()
     recorder.join()
+
+Start()
