@@ -38,7 +38,7 @@ fn main() {
                     .spawn()
                     .expect("Script failed to run!");
 
-                buttonUsed = !buttonUsed;
+                buttonUsed = true;
             } else
             {
                 println!("You already started script!");
