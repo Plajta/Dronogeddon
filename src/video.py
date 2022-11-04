@@ -11,7 +11,7 @@ time.sleep(2)
 keepRecording = True
 tello.streamon()
 frame_read = tello.get_frame_read()
-
+foceni = True
 #code definitions
 pixel_to_degree = 180/720
 degree = 0
