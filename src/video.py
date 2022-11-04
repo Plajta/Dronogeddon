@@ -40,17 +40,27 @@ def videoRecorder():
 
             distX = obj_center[0] - camera_center[0]
             degreeX = round(pixel_to_degree*distX)
+            face_size = round(width/obj[2])
+
             print(degreeX)
             if degreeX>10:
                 print("pravá")
                 tello.rotate_clockwise(degreeX)
-                sleep(0.5)
+                sleep(0.7)
             elif degreeX<-10:
                 print("levá")
                 tello.rotate_counter_clockwise(abs(degreeX))
-                sleep(0.5)
+                sleep(0.7)
             else:
-                print("stred")
+                if face_size >= 0.8:
+                    tello.move_back(10)
+                elif face_size >= 0.5:
+                    tello.move_forward(10)
+                elif face_size >= 0.25:
+                    tello.move_forward(15)
+                else:
+                    tello.move_forward(25)
+                
 
         cv2.imshow("drone", image_arr)
         cv2.imshow("drone_test", image)
