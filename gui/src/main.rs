@@ -3,7 +3,7 @@ use gtk::prelude::*;
 use std::
 {
     process::Command,
-    cel::Cell
+    cell::Cell
 };
 
 use gtk::
