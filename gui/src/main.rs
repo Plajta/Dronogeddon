@@ -35,7 +35,7 @@ fn main() {
 
         button.connect_clicked(|_|
         {
-            if buttonUsed == 0
+            if buttonUsed
             {
                 Command::new("python3")
                     .arg("../src/video.py")
