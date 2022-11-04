@@ -1,5 +1,7 @@
 use gtk4 as gtk;
 use gtk::prelude::*;
+use std::process::Command;
+
 use gtk::
 {
     Application,
@@ -7,7 +9,11 @@ use gtk::
     Button
 };
 
+//let const PROJECT_ROOT: &str = "./";
+
 fn main() {
+    let mut buttonUsed = false;
+
     let app = Application::builder()
         .application_id("com.plajtacorp.dronogeddon")
         .build();
@@ -25,7 +31,18 @@ fn main() {
 
         button.connect_clicked(|_|
         {
-            println!("Clicked!");
+            if buttonUsed
+            {
+                Command::new("python3")
+                    .arg("src/video.py")
+                    .spawn()
+                    .expect("Script failed to run!");
+
+                *buttonUsed = true;
+            } else
+            {
+                println!("You already started script!");
+            }
         });
 
         window.set_child(Some(&button));
