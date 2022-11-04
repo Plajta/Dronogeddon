@@ -5,8 +5,8 @@ from Mediapipe import *
 
 tello = Tello()
 
-tello.connect()
-
+tello.connect(False)
+time.sleep(2)
 keepRecording = True
 tello.streamon()
 frame_read = tello.get_frame_read()
