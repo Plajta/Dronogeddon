@@ -10,7 +10,7 @@ sleep(2)
 tello.takeoff()
 
 tello.move_left(100)
-tello.rotate_clockwise(90)
+tello.rotate_clockwise(180)
 tello.move_forward(100)
 
 tello.land()
