@@ -38,7 +38,7 @@ fn main() {
             /*if &buttonUsed == &0
             {*/
                 Command::new("python3")
-                    .arg("src/video.py")
+                    .arg("../src/video.py")
                     .spawn()
                     .expect("Script failed to run!");
 
