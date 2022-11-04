@@ -53,13 +53,17 @@ def videoRecorder():
                 sleep(0.7)
             else:
                 if face_size >= 0.8:
-                    tello.move_back(10)
+                    tello.move_back(21)
+                    sleep(0.7)
                 elif face_size >= 0.5:
-                    tello.move_forward(10)
+                    tello.move_forward(21)
+                    sleep(0.7)
                 elif face_size >= 0.25:
-                    tello.move_forward(15)
+                    tello.move_forward(30)
+                    sleep(0.7)
                 else:
-                    tello.move_forward(25)
+                    tello.move_forward(50)
+                    sleep(0.7)
                 
 
         cv2.imshow("drone", image_arr)
