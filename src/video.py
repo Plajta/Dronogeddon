@@ -78,5 +78,3 @@ def Start():
     keepRecording = False
     cv2.destroyAllWindows()
     recorder.join()
-
-Start()
