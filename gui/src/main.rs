@@ -12,7 +12,7 @@ use gtk::
 //let const PROJECT_ROOT: &str = "./";
 
 fn main() {
-    let mut buttonUsed: bool = false;
+    let mut buttonUsed = false;
 
     let app = Application::builder()
         .application_id("com.plajtacorp.dronogeddon")
