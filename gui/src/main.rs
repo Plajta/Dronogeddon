@@ -21,7 +21,7 @@ fn main() {
             .build();
 
         window.show();
-    );
+    });
 
     app.run();
 }
