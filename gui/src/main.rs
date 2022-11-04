@@ -35,14 +35,14 @@ fn main() {
 
         button.connect_clicked(|_|
         {
-            if buttonUsed == 0
+            if &buttonUsed == 0
             {
                 Command::new("python3")
                     .arg("src/video.py")
                     .spawn()
                     .expect("Script failed to run!");
 
-                buttonUsed = 1;
+                &buttonUsed = 1;
             } else
             {
                 println!("You already started script!");
