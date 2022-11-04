@@ -42,13 +42,13 @@ def videoRecorder():
             degreeX = round(pixel_to_degree*distX)
             print(degreeX)
             if degreeX>10:
-                tello.rotate_clockwise(degreeX)
-
                 print("pravá")
+                tello.rotate_clockwise(degreeX)
+                sleep(0.5)
             elif degreeX<-10:
-                tello.rotate_counter_clockwise(abs(degreeX))
-
                 print("levá")
+                tello.rotate_counter_clockwise(abs(degreeX))
+                sleep(0.5)
             else:
                 print("stred")
 
