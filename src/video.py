@@ -16,8 +16,8 @@ def videoRecorder():
 
     while keepRecording:
         image_arr = frame_read.frame
-        image, results = DetectHolistic(image_arr)
-        #time.sleep(1 / 30)
+        image, results = DetectFace(image_arr)
+        print(results.detections)
         cv2.imshow("drone", image)
         cv2.waitKey(1)
         #cv2.destroyAllWindows() we dont need that
