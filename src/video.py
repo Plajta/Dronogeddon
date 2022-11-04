@@ -16,8 +16,8 @@ def videoRecorder():
 
     while keepRecording:
         image_arr = frame_read.frame
-        image, results = DetectFaces(image_arr.frame)
-        time.sleep(1 / 30)
+        image, results = DetectFaces(image_arr)
+        #time.sleep(1 / 30)
         cv2.imshow("drone", image)
         cv2.waitKey(1)
         #cv2.destroyAllWindows() we dont need that
@@ -35,4 +35,5 @@ tello.flip_right();
 tello.land()
 
 keepRecording = False
+cv2.destroyAllWindows()
 recorder.join()
