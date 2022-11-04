@@ -3,7 +3,8 @@ use gtk::prelude::*;
 use gtk::
 {
     Application,
-    ApplicationWindow
+    ApplicationWindow,
+    Button
 };
 
 fn main() {
