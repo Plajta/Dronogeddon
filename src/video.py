@@ -16,7 +16,7 @@ def videoRecorder():
 
     while keepRecording:
         image_arr = frame_read.frame
-        image, results = DetectFaces(image_arr)
+        image, results = DetectHolistic(image_arr)
         #time.sleep(1 / 30)
         cv2.imshow("drone", image)
         cv2.waitKey(1)
