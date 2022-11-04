@@ -1,0 +1,5 @@
+python-opencv
+mediapipe
+djitellopy
+numpy
+matplotlib
