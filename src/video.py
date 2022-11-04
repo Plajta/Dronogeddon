@@ -13,9 +13,11 @@ frame_read = tello.get_frame_read()
 
 def videoRecorder():
     height, width, _ = frame_read.frame.shape
+    camera_center = [width/2, height/2] #x, y format
 
     while keepRecording:
         image_arr = frame_read.frame
+
         image, results = DetectFace(image_arr)
         min_x = results.detections[0].location_data.relative_bounding_box.xmin
         min_y = results.detections[0].location_data.relative_bounding_box.ymin
@@ -26,7 +28,11 @@ def videoRecorder():
         print(obj)
 
         #just testing
-        cv2.rectangle(image, (min_x, min_y), (min_x+width, min_y+height), (255, 0, 0), 2)
+        cv2.rectangle(image, (min_x, min_y), (min_x+obj_width, min_y+obj_height), (255, 0, 0), 2)
+
+        #getting center of object
+        obj_center = [min_x+round(width/2), min_y+round(height/2)]
+
 
         cv2.imshow("drone", image)
         cv2.waitKey(1)
