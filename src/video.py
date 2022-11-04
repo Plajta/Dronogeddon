@@ -17,7 +17,8 @@ def videoRecorder():
     while keepRecording:
         image_arr = frame_read.frame
         image, results = DetectFace(image_arr)
-        print(results.detections)
+        if results.detections:
+            results.detections[0].location_data.relative_bounding_box
         cv2.imshow("drone", image)
         cv2.waitKey(1)
         #cv2.destroyAllWindows() we dont need that
@@ -26,12 +27,12 @@ recorder = Thread(target=videoRecorder)
 recorder.start()
 
 tello.takeoff()
-tello.move_up(100)
-tello.rotate_counter_clockwise(360)
-tello.flip_back()
-tello.flip_forward()
-tello.flip_left()
-tello.flip_right()
+#tello.move_up(100)
+#tello.rotate_counter_clockwise(360)
+#tello.flip_back()
+#tello.flip_forward()
+#tello.flip_left()
+#tello.flip_right()
 tello.land()
 
 keepRecording = False
