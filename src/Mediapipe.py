@@ -22,4 +22,4 @@ def DetectFace(image):
   if results.detections:
     for detection in results.detections:
       mp_drawing.draw_detection(image, detection)
-  return cv2.flip(image, 1), results
+  return image, results

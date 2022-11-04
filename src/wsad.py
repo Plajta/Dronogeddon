@@ -9,21 +9,12 @@ tello = Tello()
 tello.connect(False)
 sleep(2)
 
-
-tello.streamon()
-
-
-frame_read = tello.get_frame_read()
-
 tello.takeoff()
-
-while True:
-    img = frame_read.frame
-    cv2.imshow("drone", img)
-
+kurva = True
+while kurva:
     key = cv2.waitKey(1) & 0xff
     if keyboard.read_key() == 27: # ESC
-        break
+        kurva = False
     elif keyboard.read_key() == 'w':
         tello.move_forward(30)
     elif keyboard.read_key() == 's':
@@ -38,7 +29,6 @@ while True:
         tello.rotate_counter_clockwise(30)
     elif keyboard.read_key() == 'r':
         tello.move_up(30)
-    elif keyboard.read_key() == ord('f'):
+    elif keyboard.read_key() == 'f':
         tello.move_down(30)
-
 tello.land()

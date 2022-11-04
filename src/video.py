@@ -17,26 +17,29 @@ def videoRecorder():
 
     while keepRecording:
         image_arr = frame_read.frame
-
         image, results = DetectFace(image_arr)
-        min_x = results.detections[0].location_data.relative_bounding_box.xmin
-        min_y = results.detections[0].location_data.relative_bounding_box.ymin
-        obj_width = results.detections[0].location_data.relative_bounding_box.width
-        obj_height = results.detections[0].location_data.relative_bounding_box.height
+        if results.detections:
+            min_x = results.detections[0].location_data.relative_bounding_box.xmin
+            min_y = results.detections[0].location_data.relative_bounding_box.ymin
+            obj_width = results.detections[0].location_data.relative_bounding_box.width
+            obj_height = results.detections[0].location_data.relative_bounding_box.height
 
-        obj = [round(min_x*width), (min_y*height), (obj_width*width), (obj_height*height)]
-        print(obj)
+            obj = [round(min_x*width), round(min_y*height), round(obj_width*width), round(obj_height*height)]
+            print(obj)
+            print(height, width)
 
-        #just testing
-        cv2.rectangle(image, (min_x, min_y), (min_x+obj_width, min_y+obj_height), (255, 0, 0), 2)
+            #just testing
+            image_arr = cv2.rectangle(image_arr, (int(min_x), int(min_y)), (int(min_x+obj_width), int(min_y+obj_height)), (255, 0, 0), 4)
 
-        #getting center of object
-        obj_center = [min_x+round(width/2), min_y+round(height/2)]
+            #getting center of object
+            obj_center = [int(min_x+round(width/2)), int(min_y+round(height/2))]
+            image_arr = cv2.circle(image_arr, (obj_center[0], obj_center[1]), radius=0, color=(255, 0, 0), thickness=5)
 
+            
 
-        cv2.imshow("drone", image)
+        cv2.imshow("drone", image_arr)
+        cv2.imshow("drone_test", image)
         cv2.waitKey(1)
-        #cv2.destroyAllWindows() we dont need that
 
 recorder = Thread(target=videoRecorder)
 recorder.start()
