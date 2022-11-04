@@ -3,6 +3,7 @@ from threading import Thread
 from djitellopy import Tello
 from Mediapipe import *
 from time import sleep
+
 tello = Tello()
 
 tello.connect()
@@ -46,43 +47,45 @@ def videoRecorder():
             if degreeX>10:
                 print("pravá")
                 tello.rotate_clockwise(degreeX)
-                sleep(0.7)
+                sleep(2)
             elif degreeX<-10:
                 print("levá")
                 tello.rotate_counter_clockwise(abs(degreeX))
-                sleep(0.7)
+                sleep(2)
             else:
                 if face_size >= 0.8:
                     tello.move_back(21)
-                    sleep(0.7)
+                    sleep(2)
                 elif face_size >= 0.5:
                     tello.move_forward(21)
-                    sleep(0.7)
+                    sleep(2)
                 elif face_size >= 0.25:
                     tello.move_forward(30)
-                    sleep(0.7)
+                    sleep(2)
                 else:
                     tello.move_forward(50)
-                    sleep(0.7)
+                    sleep(2)
                 
 
         cv2.imshow("drone", image_arr)
         cv2.imshow("drone_test", image)
         cv2.waitKey(1)
 
-recorder = Thread(target=videoRecorder)
-recorder.start()
+def Start():
 
-tello.takeoff()
+    recorder = Thread(target=videoRecorder)
+    recorder.start()
 
-#tello.move_up(100)
-#tello.rotate_counter_clockwise(360)
-#tello.flip_back()
-#tello.flip_forward()
-#tello.flip_left()
-#tello.flip_right()
-tello.land()
+    tello.takeoff()
 
-keepRecording = False
-cv2.destroyAllWindows()
-recorder.join()
+    #tello.move_up(100)
+    #tello.rotate_counter_clockwise(360)
+    #tello.flip_back()
+    #tello.flip_forward()
+    #tello.flip_left()
+    #tello.flip_right()
+    tello.land()
+
+    keepRecording = False
+    cv2.destroyAllWindows()
+    recorder.join()
