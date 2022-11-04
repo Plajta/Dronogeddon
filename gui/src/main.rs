@@ -1,6 +1,10 @@
 use gtk4 as gtk;
 use gtk::prelude::*;
-use std::process::Command;
+use std::
+{
+    process::Command,
+    cel::Cell
+};
 
 use gtk::
 {
