@@ -3,7 +3,7 @@ use gtk::prelude::*;
 use std::
 {
     process::Command,
-    cell::Cell
+    //cell::Cell
 };
 
 use gtk::
@@ -16,7 +16,7 @@ use gtk::
 //let const PROJECT_ROOT: &str = "./";
 
 fn main() {
-    let buttonUsed = Cell::new(false);
+    let mut buttonUsed = 0;
 
     let app = Application::builder()
         .application_id("com.plajtacorp.dronogeddon")
@@ -35,14 +35,14 @@ fn main() {
 
         button.connect_clicked(|_|
         {
-            if buttonUsed.get()
+            if &buttonUsed == &0
             {
                 Command::new("python3")
                     .arg("src/video.py")
                     .spawn()
                     .expect("Script failed to run!");
 
-                buttonUsed.set(!buttonUsed.get());
+                &mut buttonUsed = 1;
             } else
             {
                 println!("You already started script!");
