@@ -18,8 +18,8 @@ def videoRecorder():
         #video.write(frame_read.frame)
         #time.sleep(1 / 30)
         cv2.imshow("drone", frame_read.frame)
-        cv2.waitKey(100)
-        cv2.destroyAllWindows() 
+        cv2.waitKey(1)
+
 
 
 
