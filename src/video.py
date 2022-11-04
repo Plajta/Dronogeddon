@@ -11,9 +11,12 @@ keepRecording = True
 tello.streamon()
 frame_read = tello.get_frame_read()
 
+#code definitions
+pixel_to_degree = 180/720
+
 def videoRecorder():
     height, width, _ = frame_read.frame.shape
-    camera_center = [width/2, height/2] #x, y format
+    camera_center = [round(width/2), round(height/2)] #x, y format
 
     while keepRecording:
         image_arr = frame_read.frame
@@ -29,13 +32,16 @@ def videoRecorder():
             print(height, width)
 
             #just testing
-            image_arr = cv2.rectangle(image_arr, (int(min_x), int(min_y)), (int(min_x+obj_width), int(min_y+obj_height)), (255, 0, 0), 4)
+            image_arr = cv2.rectangle(image_arr, (obj[0], obj[1]), (obj[0]+obj[2], obj[1]+obj[3]), (255, 0, 0), 4)
 
             #getting center of object
-            obj_center = [int(min_x+round(width/2)), int(min_y+round(height/2))]
+            obj_center = [obj[0]+round(obj_width/2), obj[1]+round(obj_height/2)]
             image_arr = cv2.circle(image_arr, (obj_center[0], obj_center[1]), radius=0, color=(255, 0, 0), thickness=5)
 
-            
+            distX = abs(obj_center[0] - camera_center[0])
+            degreeX = round(pixel_to_degree*distX)
+            print(degreeX)
+            tello.rotate_clockwise(degreeX)
 
         cv2.imshow("drone", image_arr)
         cv2.imshow("drone_test", image)
