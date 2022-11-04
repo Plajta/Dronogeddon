@@ -3,13 +3,12 @@ from video import *
 
 
 window = tk.Tk()
-window.geometry("500x500");
 
 def StartButton():
     Start()
 
 def StopButton():
-    exit(1)
+    Stop()
 
 """
 button = tk.Button(
@@ -31,8 +30,8 @@ bottom.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
 # create the widgets for the top part of the GUI,
 # and lay them out
-b = tk.Button(window, text="Enter", width=10, height=2, command=StartButton)
-c = tk.Button(window, text="Clear", width=10, height=2, command=StopButton)
+b = tk.Button(window, text="Start", width=10, height=2, command=StartButton)
+c = tk.Button(window, text="Stop", width=10, height=2, command=StopButton)
 b.pack(in_=top, side=tk.LEFT)
 c.pack(in_=top, side=tk.LEFT)
 

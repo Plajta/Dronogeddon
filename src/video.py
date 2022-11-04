@@ -15,6 +15,8 @@ frame_read = tello.get_frame_read()
 #code definitions
 pixel_to_degree = 180/720
 degree = 0
+recorder = None
+
 def videoRecorder():
     height, width, _ = frame_read.frame.shape
     camera_center = [round(width/2), round(height/2)] #x, y format
@@ -71,6 +73,8 @@ def Start():
     #tello.flip_forward()
     #tello.flip_left()
     #tello.flip_right()
+
+def Stop():
     tello.land()
 
     keepRecording = False
