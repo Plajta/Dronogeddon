@@ -16,7 +16,7 @@ use gtk::
 //let const PROJECT_ROOT: &str = "./";
 
 fn main() {
-    let buttonUsed = Cell::new(false);
+    let buttonUsed = false
 
     let app = Application::builder()
         .application_id("com.plajtacorp.dronogeddon")
@@ -35,14 +35,14 @@ fn main() {
 
         button.connect_clicked(|_|
         {
-            if buttonUsed.get()
+            if buttonUsed
             {
                 Command::new("python3")
                     .arg("src/video.py")
                     .spawn()
                     .expect("Script failed to run!");
 
-                buttonUsed.set(!buttonUsed.get());
+                //buttonUsed.set(!buttonUsed.get());
             } else
             {
                 println!("You already started script!");
