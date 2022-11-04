@@ -1,6 +1,7 @@
 import time, cv2
 from threading import Thread
 from djitellopy import Tello
+from Mediapipe import *
 
 tello = Tello()
 
@@ -12,13 +13,14 @@ frame_read = tello.get_frame_read()
 
 def videoRecorder():
     height, width, _ = frame_read.frame.shape
-    video = cv2.VideoWriter('video.avi', cv2.VideoWriter_fourcc(*'XVID'), 30, (width, height))
 
     while keepRecording:
-        video.write(frame_read.frame)
+        image_arr = frame_read.frame
+        image, results = DetectFaces(image_arr.frame)
         time.sleep(1 / 30)
-
-    video.release()
+        cv2.imshow("drone", image)
+        cv2.waitKey(1)
+        #cv2.destroyAllWindows() we dont need that
 
 recorder = Thread(target=videoRecorder)
 recorder.start()
