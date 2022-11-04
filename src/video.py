@@ -28,10 +28,10 @@ recorder.start()
 tello.takeoff()
 tello.move_up(100)
 tello.rotate_counter_clockwise(360)
-tello.flip_back();
-tello.flip_forward();
-tello.flip_left();
-tello.flip_right();
+tello.flip_back()
+tello.flip_forward()
+tello.flip_left()
+tello.flip_right()
 tello.land()
 
 keepRecording = False
