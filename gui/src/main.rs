@@ -3,7 +3,7 @@ use gtk::prelude::*;
 use std::
 {
     process::Command,
-    cell::Cell
+    //cell::Cell
 };
 
 use gtk::
@@ -16,7 +16,7 @@ use gtk::
 //let const PROJECT_ROOT: &str = "./";
 
 fn main() {
-    let buttonUsed = false
+    let buttonUsed = false;
 
     let app = Application::builder()
         .application_id("com.plajtacorp.dronogeddon")
