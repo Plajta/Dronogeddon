@@ -47,11 +47,9 @@ def videoRecorder():
             if degreeX>10:
                 print("pravá")
                 tello.rotate_clockwise(round(degreeX/3))
-                sleep(1)
             elif degreeX<-10:
                 print("levá")
                 tello.rotate_counter_clockwise(abs(round(degreeX/3)))
-                sleep(1)
             else:
                 print("stred")
                 
@@ -78,5 +76,3 @@ def Start():
     keepRecording = False
     cv2.destroyAllWindows()
     recorder.join()
-
-Start()
