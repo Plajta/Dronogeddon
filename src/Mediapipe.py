@@ -7,7 +7,7 @@ mp_drawing = mp.solutions.drawing_utils
 face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
 
 # For webcam input:
-def DetectPose(image):
+def DetectFace(image):
 
 
   # To improve performance, optionally mark the image as not writeable to
