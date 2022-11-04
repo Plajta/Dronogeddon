@@ -20,6 +20,15 @@ fn main() {
             .title("wannabe Control Panel")
             .build();
 
+        let button = Button::with_label("Click me!");
+
+        button.connect_clicked(|_|
+        {
+            println!("Clicked!");
+        });
+
+        window.set_child(Some(&button));
+
         window.show();
     });
 
