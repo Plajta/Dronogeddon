@@ -82,8 +82,7 @@ def VideoRecorder(out_q):
                 foceni = False
                 print("mám tě čuráku")
                 cv2.imwrite('imgs/img.jpg',image_arr)
-                #Thread(target=sendEmail).start() lemme try something different
-                sendEmail()
+                Thread(target=sendEmail).start()
                 Stop()
         else:
             Movement = [0, 0]
