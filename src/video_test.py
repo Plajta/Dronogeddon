@@ -96,7 +96,7 @@ def MotorControl(in_q):
 
         if data[1] == 0 and data[0] == 0:
             #start searching for pussies
-            tello.move_forward(30)
+            tello.move_forward(80)
             time.sleep(0.7)
             tello.rotate_clockwise(180)
             time.sleep(0.7)
