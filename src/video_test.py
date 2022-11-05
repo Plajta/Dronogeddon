@@ -106,20 +106,23 @@ def MotorControl(in_q):
         if data[1] == 0 and data[0] == 0:
             #start searching for pussies
             tello.move_forward(30)
+            time.sleep(0.7)
             tello.rotate_clockwise(180)
+            time.sleep(0.7)
 
         if data[1] == 2:
             tello.rotate_clockwise(data[0])
+            time.sleep(0.7)
         elif data[1] == 0:
             tello.rotate_counter_clockwise(data[0])
-
-def Startup():
-    tello.takeoff()
-    #add more if you need so
+            time.sleep(0.7)
 
 def Start():
-    q = Queue #communication object
-    recorder = Thread(target=VideoRecorder, args=(q))
+    tello.takeoff()
+    time.sleep(1.5)
+
+    q = Queue() #communication object
+    recorder = Thread(target=VideoRecorder, args=(q, ))
     motor = Thread(target=MotorControl, args=(q, ))
     
     recorder.setDaemon(True) #trying some stuff with daemons

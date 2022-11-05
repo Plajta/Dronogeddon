@@ -20,11 +20,10 @@ def StartButton():
     with open("sender.yml", 'w') as file:
         yaml.dump(dict, file)
 
-    #Start()
+    Start()
 
 def StopButton():
-    #Stop()
-    pass
+    Stop()
 
 b = ctk.CTkButton(window, text="Start", width=120, height=40, command=StartButton).grid(row=0, column=0)
 c = ctk.CTkButton(window, text="Stop", width=120, height=40, command=StopButton).grid(row=0, column=1)
