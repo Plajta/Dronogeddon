@@ -3,7 +3,7 @@ from threading import Thread
 from djitellopy import Tello
 from Mediapipe import *
 from time import sleep
-
+from send import sendEmail
 tello = Tello()
 
 tello.connect()
@@ -11,7 +11,6 @@ time.sleep(2)
 keepRecording = True
 tello.streamon()
 frame_read = tello.get_frame_read()
-foceni = True
 #code definitions
 pixel_to_degree = 180/720
 degree = 0
@@ -54,6 +53,11 @@ def videoRecorder():
                 tello.rotate_counter_clockwise(abs(round(degreeX/3)))
             else:
                 print("stred")
+                foceni = False
+                print("mám tě čuráku")
+                cv2.imwrite('imgs/img.jpg',image_arr)
+                Thread(target=sendEmail).start()
+                Stop()
                 
 
         cv2.imshow("drone", image_arr)
@@ -75,8 +79,7 @@ def Start():
     #tello.flip_right()
 
 def Stop():
-    tello.land()
-
     keepRecording = False
+    tello.land()
     cv2.destroyAllWindows()
     recorder.join()

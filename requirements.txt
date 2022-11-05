@@ -3,3 +3,4 @@ mediapipe
 djitellopy
 numpy
 matplotlib
+pyyaml
