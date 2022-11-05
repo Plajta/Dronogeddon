@@ -36,7 +36,10 @@ c = ctk.CTkButton(window, text="Stop", width=120, height=40, command=StopButton)
 
 ctk.CTkLabel(window, text="Tvoje jméno").grid(row=1)
 ctk.CTkLabel(window, text="email").grid(row=2)
-ctk.CTkLabel(window, text=str(battery) + " %").grid(row=3)
+batteryLabel = ctk.CTkLabel(window, text=str(battery) + " %").grid(row=3)
+
+if battery <= 20:
+    batteryLabel.config(fg="red");
 
 e1 = ctk.CTkEntry(window)
 e2 = ctk.CTkEntry(window)

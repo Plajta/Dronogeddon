@@ -108,6 +108,10 @@ def MotorControl(in_q):
             pass
 
 def Start():
+    if tello.get_battery() <= 20:
+        print("Low battery!")
+        return;
+
     tello.takeoff()
     time.sleep(1.5)
 
