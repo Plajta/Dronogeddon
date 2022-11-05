@@ -8,19 +8,26 @@ from email.mime.text import MIMEText
 def sendEmail():
     with open("secret.yml", "r") as stream:
         try:
-            data = yaml.safe_load(stream)
+            data_sec = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             print(exc)
 
     sender_email = "plajtacorp@gmail.com"
-    receiver_email = data["email"]
-    password = data["password"]
+    password = data_sec["password"]
     filename = "imgs/img.jpg"
+
+    with open("sender.yml", "r") as stream:
+        try:
+            data_pub = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+    receiver_email = data_pub["email"]
+    name = data_pub["name"]
 
     message = MIMEMultipart()
     message["From"] = sender_email
     message["To"] = receiver_email
-    message["Subject"] = "!ACHTUNG!"
+    message["Subject"] = "!POZOR! " + name
     message.attach(MIMEText("Narušení koridoru!", "plain"))
 
     with open(filename, "rb") as attachment:

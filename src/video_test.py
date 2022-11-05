@@ -1,27 +1,50 @@
 import time, cv2
+
+#from ThreadType import Thread_Inherit uselles
 from threading import Thread
+from queue import Queue #IMPORTANT
+
 from djitellopy import Tello
 from Mediapipe import *
 from send import sendEmail
-tello = Tello()
 
-tello.connect()
-time.sleep(2)
-
+#variabe definitions
 foceni = False
-keepRecording = True
-tello.streamon()
-frame_read = tello.get_frame_read()
-#code definitions
+keepOperating = True
 pixel_to_degree = 180/720
 degree = 0
 recorder = None
+motor = None #passing empty threads
+_sentinel = object() #an object that is going to stop the inter-thread communication
 
-def videoRecorder():
+#global vars to change
+
+tello = Tello()
+tello.connect()
+
+print("SLEEP TIMEOUT")
+time.sleep(2)
+print("SLEEP TIMEOUT END")
+
+tello.streamon()
+frame_read = tello.get_frame_read()
+
+#thread definitions
+def VideoRecorder(out_q):
+    #          val dir
+    Movement = [0, 0]
+
+    #directions:
+    #     1 UP
+    #     |
+    # 0 - - -2
+    #     |
+    #     3 DOWN
+
     height, width, _ = frame_read.frame.shape
     camera_center = [round(width/2), round(height/2)] #x, y format
 
-    while keepRecording:
+    while keepOperating:
         image_arr = frame_read.frame
         image, results = DetectFace(image_arr)
         if results.detections:
@@ -48,43 +71,68 @@ def videoRecorder():
             print(degreeX)
             if degreeX>10:
                 print("pravá")
-                tello.rotate_clockwise(round(degreeX/3))
+                Movement = [round(degreeX/3), 2]
+                out_q.put(Movement)
             elif degreeX<-10:
                 print("levá")
-                tello.rotate_counter_clockwise(abs(round(degreeX/3)))
+                Movement = [round(degreeX/3), 2]
+                out_q.put(Movement)
             else:
                 print("stred")
                 foceni = False
                 print("mám tě čuráku")
                 cv2.imwrite('imgs/img.jpg',image_arr)
-                Thread(target=sendEmail).start()
+                #Thread(target=sendEmail).start() lemme try something different
+                sendEmail()
                 Stop()
-
+        else:
+            Movement = [0, 0]
+            out_q.put(Movement)
 
         cv2.imshow("drone", image_arr)
         cv2.imshow("drone_test", image)
         cv2.waitKey(1)
 
-def Start():
+    out_q.put(_sentinel) #putting the end object to abort operation
 
-    recorder = Thread(target=videoRecorder)
-    recorder.start()
+def MotorControl(in_q):
+    while keepOperating:
+        data = in_q.get()
 
+        if data is _sentinel:
+            in_q.put(_sentinel)
+            DestroyThreads()
+
+        if data[1] == 0 and data[0] == 0:
+            #start searching for pussies
+            tello.move_forward(30)
+            tello.rotate_clockwise(180)
+
+        if data[1] == 2:
+            tello.rotate_clockwise(data[0])
+        elif data[1] == 0:
+            tello.rotate_counter_clockwise(data[0])
+
+def Startup():
     tello.takeoff()
+    #add more if you need so
 
-    #tello.rotate_counter_clockwise(360)
-    #tello.flip_back()
-    #tello.flip_forward()
-    #tello.flip_left()
-    #tello.flip_right()
-    for i in range(3):
-        tello.rotate_clockwise(180)
-        tello.move_forward(30)
+def Start():
+    q = Queue #communication object
+    recorder = Thread(target=VideoRecorder, args=(q))
+    motor = Thread(target=MotorControl, args=(q, ))
+    
+    recorder.setDaemon(True) #trying some stuff with daemons
+    motor.setDaemon(True)
 
-
+    recorder.start()
+    motor.start()
+    
 
 def Stop():
     keepRecording = False
-    tello.land()
-    cv2.destroyAllWindows()
-    recorder.join()
+
+def DestroyThreads():
+    recorder.kill()
+    motor.kill()
+    exit(1)

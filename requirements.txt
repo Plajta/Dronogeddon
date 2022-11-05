@@ -4,3 +4,4 @@ djitellopy
 numpy
 matplotlib
 pyyaml
+customtkinter

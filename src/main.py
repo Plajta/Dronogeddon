@@ -1,5 +1,5 @@
 import tkinter as tk
-from video import *
+from video_test import *
 
 
 window = tk.Tk()
