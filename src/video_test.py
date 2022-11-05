@@ -115,13 +115,15 @@ def Start():
     q = Queue() #communication object
     recorder = Thread(target=VideoRecorder, args=(q, ))
     motor = Thread(target=MotorControl, args=(q, ))
-    
+
     recorder.setDaemon(True) #trying some stuff with daemons
     motor.setDaemon(True)
 
     recorder.start()
     motor.start()
-    
+
+def getBattery():
+    return tello.get_battery()
 
 def Stop():
     recorder.kill()

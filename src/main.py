@@ -3,7 +3,7 @@ from video_test import *
 import yaml
 import customtkinter as ctk
 
-battery = 0
+battery = getBattery()
 
 ctk.set_appearance_mode("dark")
 window = ctk.CTk()
