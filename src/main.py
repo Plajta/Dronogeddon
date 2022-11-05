@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 from video_test import *
 import yaml
 import customtkinter as ctk
@@ -45,6 +46,6 @@ e1.grid(row=1, column=1)
 e2.grid(row=2, column=1)
 
 if battery <= 20:
-    messagebox.showwarning("warning","Warning")
+    messagebox.showwarning("Warning","Drone battery is too low!")
 
 window.mainloop()
