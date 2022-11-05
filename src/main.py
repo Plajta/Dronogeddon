@@ -1,5 +1,5 @@
 from tkinter import *
-#from video_test import *
+from video_test import *
 import yaml
 import customtkinter as ctk
 
