@@ -7,6 +7,7 @@ from queue import Queue #IMPORTANT
 from djitellopy import Tello
 from Mediapipe import *
 from send import sendEmail
+from desky import dvere
 
 #variabe definitions
 keepOperating = True
@@ -19,6 +20,9 @@ keepRecording = True
 #global vars to change
 tello = Tello()
 tello.connect()
+
+tello.enable_mission_pads()
+tello.set_mission_pad_detection_direction(1)
 
 print("SLEEP TIMEOUT")
 time.sleep(2)
@@ -113,6 +117,17 @@ def Start():
 
     tello.takeoff()
     time.sleep(1.5)
+    tello.move_forward(250)
+    time.sleep(0.5)
+    tello.rotate_clockwise(90)
+    time.sleep(0.5)
+    tello.rotate_counter_clockwise(180)
+    time.sleep(0.5)
+    tello.move_forward(100)
+    time.sleep(0.5)
+    tello.rotate_clockwise(90)
+    time.sleep(0.5)
+    dvere(tello)
 
     q = Queue() #communication object
     recorder = Thread(target=VideoRecorder, args=(q, ))
