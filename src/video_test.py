@@ -21,8 +21,7 @@ keepRecording = True
 tello = Tello()
 tello.connect()
 
-tello.enable_mission_pads()
-tello.set_mission_pad_detection_direction(1)
+
 
 print("SLEEP TIMEOUT")
 time.sleep(2)
@@ -85,13 +84,15 @@ def VideoRecorder(out_q):
                 cv2.imwrite('imgs/img.jpg',image_arr)
                 Thread(target=sendEmail).start()
                 Stop()
+                keepRecording = False
+
         else:
             Movement = [0, 0]
             out_q.put(Movement)
 
-        cv2.imshow("drone", image_arr)
-        cv2.imshow("drone_test", image)
-        cv2.waitKey(1)
+        #cv2.imshow("drone", image_arr)
+        #cv2.imshow("drone_test", image)
+        #cv2.waitKey(1)
 
 def MotorControl(in_q):
     while True:
@@ -110,14 +111,34 @@ def MotorControl(in_q):
         elif data[1] == 0:
             pass
 
+def videoRecord():
+    # create a VideoWrite object, recoring to ./video.avi
+    # 创建一个VideoWrite对象，存储画面至./video.avi
+    height, width, _ = frame_read.frame.shape
+    video = cv2.VideoWriter('video.avi', cv2.VideoWriter_fourcc(*'XVID'), 30, (width, height))
+
+    while keepRecording:
+        video.write(frame_read.frame)
+        time.sleep(1 / 30)
+        cv2.imshow("drone_test", frame_read.frame)
+        cv2.waitKey(1)
+
+    video.release()
+
+
 def Start():
     if tello.get_battery() <= 20:
         print("Low battery!")
         return;
+    record = Thread(target=videoRecord, args=())
+    record.setDaemon(True)
+    record.start()
 
     tello.takeoff()
+    time.sleep(0.5)
+    tello.move_up(100)
     time.sleep(1.5)
-    tello.move_forward(250)
+    tello.move_forward(300)
     time.sleep(0.5)
     tello.rotate_clockwise(90)
     time.sleep(0.5)
@@ -132,10 +153,11 @@ def Start():
     q = Queue() #communication object
     recorder = Thread(target=VideoRecorder, args=(q, ))
     motor = Thread(target=MotorControl, args=(q, ))
+    
 
     recorder.setDaemon(True) #trying some stuff with daemons
     motor.setDaemon(True)
-
+    
     recorder.start()
     motor.start()
 
@@ -147,3 +169,5 @@ def Stop():
     tello.land()
     cv2.destroyAllWindows()
     recorder.join()
+    time.sleep(2)
+    

@@ -7,12 +7,13 @@ def dvere(tello):
     # configure drone
     # 设置无人机
       # forward detection only  只识别前方
-
-    tello.move_up(150)
+    tello.enable_mission_pads()
+    tello.set_mission_pad_detection_direction(1)
+    tello.move_up(100)
     holdingDistance = 90
-    dvere = True
+    dverex = True
     poc = 0
-    while dvere:
+    while dverex:
         pad = tello.get_mission_pad_id()
         if pad == 4:
             print("x",tello.get_mission_pad_distance_x(),"z",tello.get_mission_pad_distance_z(),"y",tello.get_mission_pad_distance_y())
@@ -52,7 +53,7 @@ def dvere(tello):
                     poc+=1
                     print(f"pocet: {poc}")
                     if poc == 69:
-                        dvere = False
+                        dverex = False
         
     tello.move_down(abs(tello.get_mission_pad_distance_y())+70)
     tello.move_forward(300)
