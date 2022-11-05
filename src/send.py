@@ -12,8 +12,6 @@ def sendEmail():
         except yaml.YAMLError as exc:
             print(exc)
 
-    port = 465
-    smtp_server = "smtp.gmail.com"
     sender_email = "plajtacorp@gmail.com"
     receiver_email = data["email"]
     password = data["password"]
