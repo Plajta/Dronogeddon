@@ -27,7 +27,7 @@ def sendEmail():
     message = MIMEMultipart()
     message["From"] = sender_email
     message["To"] = receiver_email
-    message["Subject"] = "!POZOR! " + name
+    message["Subject"] = "! ACHTUNG ! " + name
     message.attach(MIMEText("Narušení koridoru!", "plain"))
 
     with open(filename, "rb") as attachment:

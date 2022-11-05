@@ -3,6 +3,7 @@ from threading import Thread
 from djitellopy import Tello
 from Mediapipe import *
 from send import sendEmail
+
 tello = Tello()
 
 tello.connect()
@@ -67,6 +68,10 @@ def videoRecorder():
 
 def Start():
 
+    if tello.get_battery() <= 20:
+        print("Low battery!")
+        return;
+
     recorder = Thread(target=videoRecorder)
     recorder.start()
 
@@ -88,3 +93,4 @@ def Stop():
     tello.land()
     cv2.destroyAllWindows()
     recorder.join()
+

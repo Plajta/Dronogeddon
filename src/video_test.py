@@ -15,10 +15,8 @@ pixel_to_degree = 180/720
 degree = 0
 recorder = None
 motor = None #passing empty threads
-_sentinel = object() #an object that is going to stop the inter-thread communication
 
 #global vars to change
-
 tello = Tello()
 tello.connect()
 
@@ -44,7 +42,7 @@ def VideoRecorder(out_q):
     height, width, _ = frame_read.frame.shape
     camera_center = [round(width/2), round(height/2)] #x, y format
 
-    while keepOperating:
+    while True:
         image_arr = frame_read.frame
         image, results = DetectFace(image_arr)
         if results.detections:
@@ -82,8 +80,7 @@ def VideoRecorder(out_q):
                 foceni = False
                 print("mám tě čuráku")
                 cv2.imwrite('imgs/img.jpg',image_arr)
-                #Thread(target=sendEmail).start() lemme try something different
-                sendEmail()
+                Thread(target=sendEmail).start()
                 Stop()
         else:
             Movement = [0, 0]
@@ -93,19 +90,13 @@ def VideoRecorder(out_q):
         cv2.imshow("drone_test", image)
         cv2.waitKey(1)
 
-    out_q.put(_sentinel) #putting the end object to abort operation
-
 def MotorControl(in_q):
-    while keepOperating:
+    while True:
         data = in_q.get()
-
-        if data is _sentinel:
-            in_q.put(_sentinel)
-            DestroyThreads()
 
         if data[1] == 0 and data[0] == 0:
             #start searching for pussies
-            tello.move_forward(30)
+            tello.move_forward(80)
             time.sleep(0.7)
             tello.rotate_clockwise(180)
             time.sleep(0.7)
@@ -118,24 +109,27 @@ def MotorControl(in_q):
             time.sleep(0.7)
 
 def Start():
+    if tello.get_battery() <= 20:
+        print("Low battery!")
+        return;
+
     tello.takeoff()
     time.sleep(1.5)
 
     q = Queue() #communication object
     recorder = Thread(target=VideoRecorder, args=(q, ))
     motor = Thread(target=MotorControl, args=(q, ))
-    
+
     recorder.setDaemon(True) #trying some stuff with daemons
     motor.setDaemon(True)
 
     recorder.start()
     motor.start()
-    
+
+def getBattery():
+    return tello.get_battery()
 
 def Stop():
-    keepRecording = False
-
-def DestroyThreads():
     recorder.kill()
     motor.kill()
     exit(1)
