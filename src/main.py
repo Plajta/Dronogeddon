@@ -1,38 +1,41 @@
-import tkinter as tk
-from video_test import *
+from tkinter import *
+#from video_test import *
+import yaml
+import customtkinter as ctk
 
-
-window = tk.Tk()
+ctk.set_appearance_mode("dark")
+window = ctk.CTk()
+window.geometry("400x100")
 
 def StartButton():
-    Start()
+
+    name = e1.get()
+    email = e2.get()
+
+    dict = {
+        "name": name,
+        "email": email
+    }
+
+    with open("sender.yml", 'w') as file:
+        yaml.dump(dict, file)
+
+    #Start()
 
 def StopButton():
-    Stop()
+    #Stop()
+    pass
 
-"""
-button = tk.Button(
-    text = "Deploy",
-    width = 500,
-    height = 500,
-    command = buttonPressed
-)
+b = ctk.CTkButton(window, text="Start", width=120, height=40, command=StartButton).grid(row=0, column=0)
+c = ctk.CTkButton(window, text="Stop", width=120, height=40, command=StopButton).grid(row=0, column=1)
 
-button.pack()
-"""
+ctk.CTkLabel(window, text="Tvoje jméno").grid(row=1)
+ctk.CTkLabel(window, text="email").grid(row=2)
 
-# create the main sections of the layout, 
-# and lay them out
-top = tk.Frame(window)
-bottom = tk.Frame(window)
-top.pack(side=tk.TOP)
-bottom.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+e1 = ctk.CTkEntry(window)
+e2 = ctk.CTkEntry(window)
 
-# create the widgets for the top part of the GUI,
-# and lay them out
-b = tk.Button(window, text="Start", width=10, height=2, command=StartButton)
-c = tk.Button(window, text="Stop", width=10, height=2, command=StopButton)
-b.pack(in_=top, side=tk.LEFT)
-c.pack(in_=top, side=tk.LEFT)
+e1.grid(row=1, column=1)
+e2.grid(row=2, column=1)
 
 window.mainloop()
