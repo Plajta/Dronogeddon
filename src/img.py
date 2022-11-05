@@ -39,13 +39,13 @@ def videoRecorder():
         for iter, contour in enumerate(contours):
             if iter == 0:
                 continue
-            
+
             approx = cv2.approxPolyDP(contour,0.2 *cv2.arcLength(contour,True),True)
             if approx[0][0][0] - approx[1][0][0] == 0 or approx[0][0][1] - approx[0][0][1] == 0:
                 continue
 
             cv2.drawContours(test, [approx], -1, (0,0,255), 3)
-            
+
             dy = approx[1][0][0] - approx[0][0][0]
             dx = approx[1][0][1] - approx[0][0][1]
             delta_array[0] = round(dy/dx, 1)
