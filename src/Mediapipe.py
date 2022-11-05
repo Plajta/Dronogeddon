@@ -4,7 +4,7 @@ mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 
 #face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
-face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.5)
+face_detection = mp_face_detection.FaceDetection(model_selection=0, min_detection_confidence=0.3)
 
 # For webcam input:
 def DetectFace(image):
