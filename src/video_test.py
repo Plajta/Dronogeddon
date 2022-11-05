@@ -9,12 +9,12 @@ from Mediapipe import *
 from send import sendEmail
 
 #variabe definitions
-foceni = False
 keepOperating = True
 pixel_to_degree = 180/720
 degree = 0
 recorder = None
 motor = None #passing empty threads
+keepRecording = True
 
 #global vars to change
 tello = Tello()
@@ -42,7 +42,7 @@ def VideoRecorder(out_q):
     height, width, _ = frame_read.frame.shape
     camera_center = [round(width/2), round(height/2)] #x, y format
 
-    while True:
+    while keepRecording:
         image_arr = frame_read.frame
         image, results = DetectFace(image_arr)
         if results.detections:
@@ -77,7 +77,6 @@ def VideoRecorder(out_q):
                 out_q.put(Movement)
             else:
                 print("stred")
-                foceni = False
                 print("mám tě čuráku")
                 cv2.imwrite('imgs/img.jpg',image_arr)
                 Thread(target=sendEmail).start()
@@ -129,6 +128,7 @@ def getBattery():
     return tello.get_battery()
 
 def Stop():
-    recorder.kill()
-    motor.kill()
-    exit(1)
+    keepRecording = False
+    tello.land()
+    cv2.destroyAllWindows()
+    recorder.join()
