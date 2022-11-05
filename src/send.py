@@ -15,7 +15,7 @@ def sendEmail():
     sender_email = "plajtacorp@gmail.com"
     receiver_email = data["email"]
     password = data["password"]
-    filename = "imgs/img.jpg"
+    filename = "imgs/img.png"
 
     message = MIMEMultipart()
     message["From"] = sender_email
@@ -43,3 +43,5 @@ def sendEmail():
         server.sendmail(sender_email, receiver_email, text)
 
     print("sent")
+
+sendEmail()
