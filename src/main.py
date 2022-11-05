@@ -14,6 +14,9 @@ def StartButton():
     name = e1.get()
     email = e2.get()
 
+    if not name or not email:
+        return
+
     dict = {
         "name": name,
         "email": email
