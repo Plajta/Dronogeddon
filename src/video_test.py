@@ -93,7 +93,7 @@ def VideoRecorder(out_q):
 def MotorControl(in_q):
     while True:
         data = in_q.get()
-
+        print(data)
         if data[1] == 0 and data[0] == 0:
             #start searching for pussies
             tello.move_forward(80)
@@ -105,8 +105,7 @@ def MotorControl(in_q):
             tello.rotate_clockwise(data[0])
             time.sleep(0.7)
         elif data[1] == 0:
-            tello.rotate_counter_clockwise(data[0])
-            time.sleep(0.7)
+            pass
 
 def Start():
     tello.takeoff()
