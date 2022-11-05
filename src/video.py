@@ -2,7 +2,6 @@ import time, cv2
 from threading import Thread
 from djitellopy import Tello
 from Mediapipe import *
-from time import sleep
 from send import sendEmail
 tello = Tello()
 
@@ -58,7 +57,7 @@ def videoRecorder():
                 cv2.imwrite('imgs/img.jpg',image_arr)
                 Thread(target=sendEmail).start()
                 Stop()
-                
+
 
         cv2.imshow("drone", image_arr)
         cv2.imshow("drone_test", image)

@@ -1,7 +1,6 @@
 import tensorflow_hub as hub
 import tensorflow as tf
 import cv2
-import numpy as np
 
 detector = hub.load("https://tfhub.dev/tensorflow/faster_rcnn/inception_resnet_v2_640x640/1")
 

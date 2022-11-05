@@ -1,9 +1,8 @@
-import time, cv2
+import cv2
 from threading import Thread
 from djitellopy import Tello
 from time import sleep
 import numpy as np
-import math
 
 tello = Tello()
 
