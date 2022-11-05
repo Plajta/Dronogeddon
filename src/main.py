@@ -7,7 +7,8 @@ battery = getBattery()
 
 ctk.set_appearance_mode("dark")
 window = ctk.CTk()
-window.geometry("400x100")
+window.geometry("400x150")
+window.resizable(False, False)
 
 def StartButton():
 
@@ -35,7 +36,7 @@ c = ctk.CTkButton(window, text="Stop", width=120, height=40, command=StopButton)
 
 ctk.CTkLabel(window, text="Tvoje jméno").grid(row=1)
 ctk.CTkLabel(window, text="email").grid(row=2)
-ctk.CTkLabel(window, text=battery + " %").grid(row=3)
+ctk.CTkLabel(window, text=str(battery) + " %").grid(row=3)
 
 e1 = ctk.CTkEntry(window)
 e2 = ctk.CTkEntry(window)
