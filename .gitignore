@@ -3,3 +3,4 @@ video.avi
 /src/__pycache__/
 mp_env
 secret.yml
+sender.yml
