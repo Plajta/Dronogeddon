@@ -15,10 +15,8 @@ pixel_to_degree = 180/720
 degree = 0
 recorder = None
 motor = None #passing empty threads
-_sentinel = object() #an object that is going to stop the inter-thread communication
 
 #global vars to change
-
 tello = Tello()
 tello.connect()
 
@@ -44,7 +42,7 @@ def VideoRecorder(out_q):
     height, width, _ = frame_read.frame.shape
     camera_center = [round(width/2), round(height/2)] #x, y format
 
-    while keepOperating:
+    while True:
         image_arr = frame_read.frame
         image, results = DetectFace(image_arr)
         if results.detections:
@@ -92,15 +90,9 @@ def VideoRecorder(out_q):
         cv2.imshow("drone_test", image)
         cv2.waitKey(1)
 
-    out_q.put(_sentinel) #putting the end object to abort operation
-
 def MotorControl(in_q):
-    while keepOperating:
+    while True:
         data = in_q.get()
-
-        if data is _sentinel:
-            in_q.put(_sentinel)
-            DestroyThreads()
 
         if data[1] == 0 and data[0] == 0:
             #start searching for pussies
@@ -132,9 +124,6 @@ def Start():
     
 
 def Stop():
-    keepRecording = False
-
-def DestroyThreads():
     recorder.kill()
     motor.kill()
     exit(1)
