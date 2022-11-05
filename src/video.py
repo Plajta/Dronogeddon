@@ -7,6 +7,8 @@ tello = Tello()
 
 tello.connect()
 time.sleep(2)
+
+foceni = False
 keepRecording = True
 tello.streamon()
 frame_read = tello.get_frame_read()
