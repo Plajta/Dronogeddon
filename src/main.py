@@ -7,7 +7,8 @@ battery = getBattery()
 
 ctk.set_appearance_mode("dark")
 window = ctk.CTk()
-window.geometry("400x100")
+window.geometry("400x150")
+window.resizable(False, False)
 
 def StartButton():
 
