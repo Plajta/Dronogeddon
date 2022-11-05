@@ -8,6 +8,8 @@ tello = Tello()
 
 tello.connect()
 time.sleep(2)
+
+foceni = False
 keepRecording = True
 tello.streamon()
 frame_read = tello.get_frame_read()
@@ -53,12 +55,13 @@ def videoRecorder():
                 tello.rotate_counter_clockwise(abs(round(degreeX/3)))
             else:
                 print("stred")
-                foceni = False
-                print("mám tě čuráku")
-                cv2.imwrite('imgs/img.jpg',image_arr)
-                Thread(target=sendEmail).start()
-                Stop()
                 
+                if foceni == False:
+                    print("mám tě čuráku")
+                    cv2.imwrite('imgs/img.jpg',image_arr)
+                    Thread(target=sendEmail).start()
+                #Stop()
+                    foceni = True
 
         cv2.imshow("drone", image_arr)
         cv2.imshow("drone_test", image)
