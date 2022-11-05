@@ -3,6 +3,8 @@ from threading import Thread
 from djitellopy import Tello
 from Mediapipe import *
 from send import sendEmail
+from main import battery
+
 tello = Tello()
 
 tello.connect()
@@ -92,3 +94,5 @@ def Stop():
     tello.land()
     cv2.destroyAllWindows()
     recorder.join()
+
+battery = tello.get_battery()
