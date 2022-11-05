@@ -22,14 +22,14 @@ dvere = True
 poc = 0
 while dvere:
     if pad == 4:
-        
+
         print("x",tello.get_mission_pad_distance_x(),"z",tello.get_mission_pad_distance_z(),"y",tello.get_mission_pad_distance_y())
         #print("y",tello.get_mission_pad_distance_y())
         #print("z",tello.get_mission_pad_distance_z())
         #print(tello.get_battery())
-        
+
         """
-        disy = tello.get_mission_pad_distance_y() 
+        disy = tello.get_mission_pad_distance_y()
         if disy > 19:
             #print("hor")
             tello.move_up(disy)
@@ -39,8 +39,8 @@ while dvere:
         #else:
             #print("stred")
         """
-        
-        
+
+
         disx = tello.get_mission_pad_distance_x()
         if disx > 9:
             #print("pravá")
