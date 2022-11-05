@@ -67,6 +67,10 @@ def videoRecorder():
 
 def Start():
 
+    if tello.get_battery() <= 20:
+        print("Low battery!")
+        return;
+
     recorder = Thread(target=videoRecorder)
     recorder.start()
 
