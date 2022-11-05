@@ -58,8 +58,8 @@ def videoRecorder():
                 foceni = False
                 print("mám tě čuráku")
                 cv2.imwrite('imgs/img.jpg',image_arr)
-                Thread(target=sendEmail).start()
-                Stop()
+                #Thread(target=sendEmail).start()
+                #Stop()
 
 
         cv2.imshow("drone", image_arr)
@@ -94,3 +94,4 @@ def Stop():
     cv2.destroyAllWindows()
     recorder.join()
 
+Start()
