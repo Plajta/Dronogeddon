@@ -8,7 +8,6 @@ tello = Tello()
 
 tello.connect()
 
-keepRecording = True
 tello.streamon()
 frame_read = tello.get_frame_read()
 
@@ -16,7 +15,7 @@ def videoRecorder():
     height, width, _ = frame_read.frame.shape
     video = cv2.VideoWriter('video.avi', cv2.VideoWriter_fourcc(*'XVID'), 30, (width, height))
 
-    while keepRecording:
+    while True:
         #720 - height, 960- width
         image = frame_read.frame
         height = image.shape[0]
@@ -77,5 +76,4 @@ tello.move_up(100)
 tello.rotate_counter_clockwise(360)
 tello.land()
 
-keepRecording = False
 recorder.join()
