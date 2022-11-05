@@ -43,5 +43,3 @@ def sendEmail():
         server.sendmail(sender_email, receiver_email, text)
 
     print("sent")
-
-sendEmail()
