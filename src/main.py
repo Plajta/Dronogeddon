@@ -21,6 +21,9 @@ print("SLEEP TIMEOUT END")
 tello.streamon()
 frame_read = tello.get_frame_read()
 
+def getBattery():
+    return tello.get_battery()
+
 def videoRecorder():
     height, width, _ = frame_read.frame.shape
 
