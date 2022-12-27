@@ -1,0 +1,2 @@
+def Detect():
+    print("idk")
