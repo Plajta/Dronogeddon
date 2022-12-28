@@ -1,5 +1,8 @@
-imgs
-video.avi
+
+human-detection-dataset 
+#Installed some simple unannotated dataset from: https://www.kaggle.com/datasets/constantinwerner/human-detection-dataset?resource=download
+#I will use a small portion of it on testing
+
 /src/__pycache__/
 mp_env
 secret.yml
