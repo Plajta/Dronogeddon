@@ -1,51 +1,42 @@
-from tkinter import *
-from tkinter import messagebox
-from video_test import *
-import yaml
-import customtkinter as ctk
+import time, cv2
+from threading import Thread
+from queue import Queue #IMPORTANT
 
-battery = getBattery()
+from djitellopy import Tello
 
-ctk.set_appearance_mode("dark")
-window = ctk.CTk()
-window.geometry("400x150")
-window.resizable(False, False)
+#custom
+import detection
 
-def StartButton():
+#vars
+keepRecording = True
 
-    name = e1.get()
-    email = e2.get()
+#Init
+tello = Tello()
+tello.connect()
 
-    if not name or not email:
-        return
+print("SLEEP TIMEOUT")
+time.sleep(2)
+print("SLEEP TIMEOUT END")
 
-    dict = {
-        "name": name,
-        "email": email
-    }
+tello.streamon()
+frame_read = tello.get_frame_read()
 
-    with open("sender.yml", 'w') as file:
-        yaml.dump(dict, file)
+def getBattery():
+    return tello.get_battery()
 
-    Start()
+def videoRecorder():
+    height, width, _ = frame_read.frame.shape
 
-def StopButton():
-    Stop()
+    while keepRecording:
+        detection.Detect()
+        
+recorder = Thread(target=videoRecorder)
+recorder.start()
 
-b = ctk.CTkButton(window, text="Start", width=120, height=40, command=StartButton).grid(row=0, column=0)
-c = ctk.CTkButton(window, text="Stop", width=120, height=40, command=StopButton).grid(row=0, column=1)
+tello.takeoff()
+tello.move_up(100)
+tello.rotate_counter_clockwise(360)
+tello.land()
 
-ctk.CTkLabel(window, text="Tvoje jméno").grid(row=1)
-ctk.CTkLabel(window, text="email").grid(row=2)
-ctk.CTkLabel(window, text=str(battery) + " %").grid(row=3)
-
-e1 = ctk.CTkEntry(window)
-e2 = ctk.CTkEntry(window)
-
-e1.grid(row=1, column=1)
-e2.grid(row=2, column=1)
-
-if battery <= 20:
-    messagebox.showwarning("Warning","Drone battery is too low!")
-
-window.mainloop()
+keepRecording = False
+recorder.join()
