@@ -23,6 +23,8 @@ def detect(img):
     
     print(detections["boxes"])
 
+    startX, startY, endX, endY = None, None, None, None
+
     # loop over the detections
     for i in range(0, len(detections["boxes"])):
         # extract the confidence (i.e., probability) associated with the
