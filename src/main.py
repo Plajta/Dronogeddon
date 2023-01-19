@@ -5,7 +5,7 @@ from queue import Queue #IMPORTANT
 from djitellopy import Tello
 
 #custom
-import detection
+#import detection
 
 #vars
 keepRecording = True
@@ -28,7 +28,8 @@ def videoRecorder():
     height, width, _ = frame_read.frame.shape
 
     while keepRecording:
-        detection.Detect()
+        #detection.Detect()
+        print("RUN!")
         
 recorder = Thread(target=videoRecorder)
 recorder.start()
