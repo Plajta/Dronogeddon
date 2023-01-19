@@ -10,4 +10,4 @@ Software vytvářen na G+SOŠ hackathonu, dron by měl detekovat obličej člov�
 > 2. Přidat více UI
 > 3. dodělat orientaci drona v prostoru
 
-Použité knihovny: `mediapipe`, `opencv`, `tkinter`, `customtkinter`, `smtplib`, `djitellopy`, `python-opencv`
+Použité knihovny: `pytorch`, `opencv`, `tkinter`, `customtkinter`, `smtplib`, `djitellopy`, `python-opencv`
