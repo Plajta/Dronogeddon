@@ -33,12 +33,12 @@ def detect(img):
         if idx == CLASSES and confidence > 90:
             box = detections["boxes"][i].detach().cpu().numpy()
             (startX, startY, endX, endY) = box.astype("int")
-            # display the prediction to our terminal
+            
             label = "{}: {:.2f}%".format(CLASSES, confidence)
             print("[INFO] {}".format(label))
-            # draw the bounding box and label on the image
+
             cv2.rectangle(img_orig, (startX, startY), (endX, endY), (255, 0, 0), 2)
             y = startY - 15 if startY - 15 > 15 else startY + 15
             cv2.putText(img_orig, label, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
-    return img_orig
+    return img_orig, (startY, startX, endY, endX)
