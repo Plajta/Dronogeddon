@@ -1,7 +1,5 @@
 from torchvision.models.detection import fasterrcnn_mobilenet_v3_large_320_fpn
 import numpy as np
-import argparse
-import pickle
 import torch
 import cv2
 import mediapipe as mp
