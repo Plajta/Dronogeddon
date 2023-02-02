@@ -21,7 +21,7 @@ def K_Clustering(image, n_clusters):
 
     return img_res
 
-def HoughLines(image_in, image_out):
+def HoughLines(image_in, image_out, l_color):
     """
     IN: binary image
     OUT: BGR image
@@ -40,7 +40,7 @@ def HoughLines(image_in, image_out):
             y0 = b * rho
             pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
             pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
-            cv2.line(image_out, pt1, pt2, (0, 0, 255), 3, cv2.LINE_AA)
+            cv2.line(image_out, pt1, pt2, l_color, 3, cv2.LINE_AA)
 
     return image_out
 
@@ -73,17 +73,31 @@ def Automatic_Thresh(gray_image): #https://stackoverflow.com/questions/41893029/
 def Detect_Corners(image_in, image_out):
     """
     IN: grayscale image
-    OUT: BGR image
+    OUT: binary image
     """
 
-    gray_image = np.float32(image_in)
+    image_in = np.float32(image_in)
     corners = cv2.cornerHarris(image_in, 2, 5, 0.07)
   
     # Results are marked through the dilated corners
     corners = cv2.dilate(corners, None)
 
-    image_out[corners > 0.01 * corners.max()]=[0, 0, 255]
+    image_out[corners > 0.01 * corners.max()] = 255
     return image_out
+
+def Slice_image(image_in, strides):
+    """
+    IN: binary image, stride (y, x)
+    OUT: sliced binary image
+    """
+
+    sliceY = math.ceil(image_in.shape[0] / strides[0])
+    sliceX = math.ceil(image_in.shape[1] / strides[1])
+
+    for iy in range(strides[0]): cv2.line(image_in, (iy * sliceY, 0), (iy * sliceY, image_in.shape[0]), 0, 3)
+    for ix in range(strides[1]): cv2.line(image_in, (0, ix * sliceX), (image_in.shape[1], ix * sliceX), 0, 3)
+
+    return image_in
 
 #main code
 
@@ -92,25 +106,41 @@ while(True):
       
     ret, frame = vid.read()
 
-    #creating blank images
+    #creating blank images and other image manipulation
     blank = np.zeros(frame.shape)
+    corners = np.zeros(frame.shape[:2], dtype=np.uint8)
+
+    frame = cv2.GaussianBlur(frame, (3, 3), 0)
+
+    #
+    # Generating Canny, Harris and K-Means
+    #
 
     #clustering
     img = Adjust_Gamma(frame, 0.4)
-    img_cluster = K_Clustering(frame, 5) #TODO: maybe
+    img_cluster = K_Clustering(frame, 7) #TODO: maybe
 
     img_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     #edge detection
     upper, lower = Automatic_Thresh(img_gray)
     img_canny = cv2.Canny(img_gray, lower, upper)
-    
-    blank = HoughLines(img_canny, blank)
+
+    img_canny = Slice_image(img_canny, (5, 5))
 
     #corner detection
-    blank = Detect_Corners(img_gray, blank)
+    corners = Detect_Corners(img_gray, corners)
 
+    #
+    # Fitting lines through interest points
+    #
+
+    blank = HoughLines(img_canny, blank, (0, 0, 255))
+    blank = HoughLines(corners, blank, (255, 0, 0)) #TODO: kinda useless
+
+    #cv2.imshow("frame", frame)
     cv2.imshow("frame_canny", img_canny)
+    #cv2.imshow("frame_corners", corners)
     cv2.imshow("frame_lines", blank)
     cv2.imshow("frame_K_means", img_cluster)
     if cv2.waitKey(1) & 0xFF == ord('q'):
