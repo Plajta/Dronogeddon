@@ -28,7 +28,7 @@ def HoughLines(image_in, image_out, l_color):
     """
 
     lines = cv2.HoughLines(image_in, 1, np.pi / 180, 135, None, 0, 0)
-    #must be binary (0 or 1)
+    line_points = []
 
     if lines is not None:
         for i in range(0, len(lines)):
@@ -38,11 +38,13 @@ def HoughLines(image_in, image_out, l_color):
             b = math.sin(theta)
             x0 = a * rho
             y0 = b * rho
-            pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
+            pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a))) #x, y notation
             pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
             cv2.line(image_out, pt1, pt2, l_color, 3, cv2.LINE_AA)
 
-    return image_out
+            line_points.append([pt1, pt2])
+
+    return image_out, line_points
 
 def Adjust_Gamma(image, gamma):
     """
@@ -99,6 +101,20 @@ def Slice_image(image_in, strides):
 
     return image_in
 
+def CalculateAngle(line):
+    d_x = line[0][0] - line[1][0]
+    d_y = line[0][1] - line[1][1]
+
+    deg = round(math.degrees(math.atan(abs(d_x) / abs(d_y))), 2)
+
+    if d_x < 0 or d_y < 0:
+        #is negative and so the actual angle is also negative
+        line.append(-deg)
+    else: line.append(deg)
+
+def GroupLines(lines):
+    pass #TODO: dodělat!
+
 #main code
 
 vid = cv2.VideoCapture(0)
@@ -135,8 +151,20 @@ while(True):
     # Fitting lines through interest points
     #
 
-    blank = HoughLines(img_canny, blank, (0, 0, 255))
-    blank = HoughLines(corners, blank, (255, 0, 0)) #TODO: kinda useless
+    blank, lines1 = HoughLines(img_canny, blank, (0, 0, 255))
+    blank, lines2 = HoughLines(corners, blank, (255, 0, 0)) #TODO: kinda useless
+
+    #
+    # Line grouping by difference of angle and distance
+    #
+    
+    lines = lines1 + lines2
+    for line in lines:
+        CalculateAngle(line)
+
+
+    
+    print(lines)
 
     #cv2.imshow("frame", frame)
     cv2.imshow("frame_canny", img_canny)
