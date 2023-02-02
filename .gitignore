@@ -4,6 +4,9 @@ human-detection-dataset
 #I will use a small portion of it on testing
 
 /src/__pycache__/
+/src/Detection/__pycache__/
+/src/Detection/dataset/annotations*
+
 mp_env
 secret.yml
 sender.yml
