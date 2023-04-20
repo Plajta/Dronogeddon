@@ -8,4 +8,3 @@ def mesurments():
     mesurments = [int(responses[1]),int(responses[2]),int(responses[3])]
     return mesurments
 
-    
