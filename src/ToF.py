@@ -10,6 +10,6 @@ def mesurments():
     else:
         return [int(responses[1]),int(responses[2]),int(responses[3])]
 
-while True:
+#while True:
     mesurments()
 

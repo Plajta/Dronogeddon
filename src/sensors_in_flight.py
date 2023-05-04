@@ -9,7 +9,7 @@ from threading import Thread
 
 margin_side_low = 800
 margin_side_high = 1500
-border_front = 950
+border_front = 500
 
 mean = [[],[],[]]
 
@@ -19,7 +19,7 @@ def distancemeter():
     for i in range(0,3):
         mean[i].append(data[i])
 
-    if len(mean[0]) > 10:
+    if len(mean[0]) > 15:
         for i in range(0,3):
             mean[i].pop(0)
     for i,j in enumerate(mean):
@@ -31,20 +31,21 @@ def distancemeter():
     return(output)
 
 
+tello = Tello()
+tello.connect(False)
 
-
+flight_name = input()
 
 start_time = time.time()
 log_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.gmtime())
 log_pad = open(f"src/Flight_logs/flight_log_{log_time}.txt", 'w')
 log_pad.write(f"start of the program at {log_time}\n\n")
-log_pad.write(f"side margin low is: {margin_side_low} || side mrgin high is {margin_side_high} || border front is {border_front}\n\n")
+log_pad.write(f"side margin low is: {margin_side_low} || side mrgin high is {margin_side_high} || border front is {border_front} || batery is {tello.get_battery()}\n\n")
 
 def log(text=""):
-    log_pad.write(f"{round(time.time()-start_time, 2)}: {text}\n")
+    log_pad.write(f"{round(time.time()-start_time, 2)}|{tello.get_battery()}%: {text}\n")
 
-tello = Tello()
-tello.connect(False)
+
 
 log("tello takeoff")
 tello.takeoff()
@@ -75,7 +76,7 @@ while True:
         data = distancemeter()
         log(data)
 
-        distanceFront = data[0]
+        distanceFront = data[3]
         distanceSide = data[2]
         speedFront = 0 
         speedSide = 0
@@ -91,11 +92,23 @@ while True:
 
 
         if distanceFront > border_front:
-            speedFront = 20
+            speedFront = 30
 
         else:
             speedFront = 0
             pokracovac = False
+            """
+            tello.send_rc_control(0,0,0,0)
+            for i in range(10):
+                time.sleep(0.5)
+                data = distancemeter()
+                distanceFront = data[0]
+                log(f"{i}. {data}")
+            if distanceFront < border_front:
+                speedFront = 0
+                pokracovac = False
+            else:
+                log("planý poplach")"""
 
         tello.send_rc_control(speedSide,speedFront,0,0)
 
