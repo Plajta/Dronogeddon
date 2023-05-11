@@ -1,0 +1,3 @@
+start of the program at 2023_05_11_15_59_07
+
+side margin low is: 800 || side mrgin high is 1300 || border front is 500 || batery is n

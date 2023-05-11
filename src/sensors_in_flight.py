@@ -1,25 +1,39 @@
 """pole co dělá průměr posledních hodnot => počítat průměr 
 	dopředu odstraní chybné methody
 		zastavý provede další kontrolní měření - 5x"""
-
+import cv2
 from djitellopy import Tello
 import ToF as tf
 import time
 from threading import Thread
 
-margin_side_low = 800
-margin_side_high = 1500
+side_margin_low = 800
+side_margin_high = 1300
 border_front = 500
 
-mean = [[],[],[]]
+start_time = time.time()
+log_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.gmtime())
 
+def videoRecorder():
+    # create a VideoWrite object, recoring to ./video.avi
+    # 创建一个VideoWrite对象，存储画面至./video.avi
+    height, width, _ = frame_read.frame.shape
+    video = cv2.VideoWriter(f'src/Flight_logs/video/flight_log_{log_time}.mkv', cv2.VideoWriter_fourcc(*'XVID'), 30, (width, height))
+
+    while keepRecording:
+        video.write(frame_read.frame)
+        time.sleep(1 / 30)
+
+    video.release()
+
+mean = [[],[],[]]
 def distancemeter():
     data = tf.mesurments()
     output = data
     for i in range(0,3):
         mean[i].append(data[i])
 
-    if len(mean[0]) > 15:
+    if len(mean[0]) > 13:
         for i in range(0,3):
             mean[i].pop(0)
     for i,j in enumerate(mean):
@@ -31,21 +45,21 @@ def distancemeter():
     return(output)
 
 
+log_pad = open(f"src/Flight_logs/txt/flight_log_{log_time}.txt", 'w')
+log_pad.write(f"start of the program at {log_time}\n\n")
+log_pad.write(f"side margin low is: {side_margin_low} || side mrgin high is {side_margin_high} || border front is {border_front} || batery is n\n")
+
+def log(text="", entr="\n"):
+    log_pad.write(f"{round(time.time()-start_time, 2)}\t{text}{entr}")
+
+
 tello = Tello()
 tello.connect(False)
-
-flight_name = input()
-
-start_time = time.time()
-log_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.gmtime())
-log_pad = open(f"src/Flight_logs/flight_log_{log_time}.txt", 'w')
-log_pad.write(f"start of the program at {log_time}\n\n")
-log_pad.write(f"side margin low is: {margin_side_low} || side mrgin high is {margin_side_high} || border front is {border_front} || batery is {tello.get_battery()}\n\n")
-
-def log(text=""):
-    log_pad.write(f"{round(time.time()-start_time, 2)}|{tello.get_battery()}%: {text}\n")
-
-
+keepRecording = True
+tello.streamon()
+frame_read = tello.get_frame_read()
+recorder = Thread(target=videoRecorder)
+recorder.start()
 
 log("tello takeoff")
 tello.takeoff()
@@ -74,24 +88,36 @@ while True:
 
     while pokracovac:
         data = distancemeter()
-        log(data)
+        
 
-        distanceFront = data[3]
-        distanceSide = data[2]
+        distance_front = data[3]
+        distance_sideL = data[1]
+        distance_sideR = data[2]
         speedFront = 0 
         speedSide = 0
 
-        if distanceSide < margin_side_low:
+
+        if distance_sideL + distance_sideR < side_margin_high * 2:
+            local_side_margin_high = (distance_sideL + distance_sideR)/2
+            local_side_margin_low = local_side_margin_high - 300
+            log(f"{data} || soucet:{distance_sideL + distance_sideR} True H:{local_side_margin_high} L:{local_side_margin_low}")
+
+        else:
+            local_side_margin_high = side_margin_high
+            local_side_margin_low = side_margin_low
+            log(f"{data} || soucet:{distance_sideL + distance_sideR} False H:{local_side_margin_high} L:{local_side_margin_low}")
+
+        if distance_sideR < local_side_margin_low:
             speedSide = -20
 
-        elif distanceSide > margin_side_high:
+        elif distance_sideR > local_side_margin_high:
             speedSide = 20
 
         else:
             speedSide = 0
 
 
-        if distanceFront > border_front:
+        if distance_front > border_front:
             speedFront = 30
 
         else:
@@ -119,3 +145,5 @@ while True:
 tello.send_rc_control(0,0,0,0)
 tello.land
 log_pad.close()
+keepRecording = False
+recorder.join()
