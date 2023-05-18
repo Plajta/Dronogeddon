@@ -9,6 +9,7 @@ human-detection-dataset
 
 /src/tests/
 /src/Flight_logs/video/
+.vscode
 
 mp_env
 secret.yml
