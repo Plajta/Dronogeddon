@@ -127,13 +127,13 @@ def videoRecorder():
         speedFront = 0
         tello.rotate_counter_clockwise(90)
 
-    instructions_ToF.put([speedSide, speedFront])
-
+    #instructions_ToF.put([speedSide, speedFront])
+    tello.send_rc_control(speedSide,speedFront,0,0)
     return image
 
 def process_instructions():
     while True: #i hate this
-
+        print(1)
         """
         CAMERA
         """
@@ -155,6 +155,7 @@ def process_instructions():
         """
 
         tello.send_rc_control(instruction_ToF[0],instruction_ToF[1],0,0)
+
 
 log_pad = open(f"src/Flight_logs/txt/flight_log_{log_time}.txt", 'w')
 log_pad.write(f"start of the program at {log_time}\n\n")
