@@ -9,6 +9,8 @@ human-detection-dataset
 
 /src/tests/
 /src/Flight_logs/video/
+/src/Flight_logs/txt/
+/src/neural/__pycache__
 .vscode
 
 mp_env

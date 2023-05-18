@@ -5,7 +5,7 @@ from queue import Queue
 from djitellopy import Tello
 import logging
 
-from pretrained import model, convert_to_tensor, process_data, compute_dev, SCREEN_CENTER
+from neural.pretrained import model, convert_to_tensor, process_data, compute_dev, SCREEN_CENTER
 
 #tello = Tello()
 #tello.LOGGER.setLevel(logging.DEBUG)

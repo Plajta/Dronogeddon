@@ -62,7 +62,7 @@ def stop_drone():
     exit(1)
 
 def videoRecorder():
-    image = frame_read.frame.shape
+    image = frame_read.frame
 
 
     """
@@ -176,7 +176,7 @@ instructor.start()
 
 log("tello takeoff")
 tello.takeoff()
-tello.move_up(100)
+#tello.move_up(100)
 
 pokracovac = True
 while pokracovac:
