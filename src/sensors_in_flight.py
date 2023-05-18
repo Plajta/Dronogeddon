@@ -9,10 +9,13 @@ from threading import Thread
 
 side_margin_low = 800
 side_margin_high = 1300
-border_front = 500
+border_front = 50
 
 start_time = time.time()
 log_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.gmtime())
+font = cv2.FONT_HERSHEY_SIMPLEX
+
+data = [0,0,0,0,0,0]
 
 def videoRecorder():
     # create a VideoWrite object, recoring to ./video.avi
@@ -21,7 +24,33 @@ def videoRecorder():
     video = cv2.VideoWriter(f'src/Flight_logs/video/flight_log_{log_time}.mkv', cv2.VideoWriter_fourcc(*'XVID'), 30, (width, height))
 
     while keepRecording:
-        video.write(frame_read.frame)
+        frame = frame_read.frame
+        
+        cv2.putText(frame, 
+                f"{round(time.time()-start_time, 2)}s", 
+                (10, 20), 
+                font, 1/2, 
+                (0, 255, 255),
+                2,
+                cv2.LINE_4) 
+    
+        cv2.putText(frame, 
+                    f"{log_time}", 
+                    (770, 20), 
+                    font, 1/2, 
+                    (0, 255, 255), 
+                    2, 
+                    cv2.LINE_4) 
+        
+        cv2.putText(frame, 
+                f"{data}", 
+                (10, 700), 
+                font, 1/2, 
+                (255, 255, 255), 
+                2, 
+                cv2.LINE_4) 
+        
+        video.write(frame)
         time.sleep(1 / 30)
 
     video.release()
@@ -40,7 +69,7 @@ def distancemeter():
         output.append(0)
         for k in j:
             output[i+3] += k
-        output[i+3] /= len(j)
+        output[i+3] = round(output[i+3] / len(j))
 
     return(output)
 
@@ -63,15 +92,16 @@ recorder.start()
 
 log("tello takeoff")
 tello.takeoff()
-tello.move_up(100)
+#tello.move_up(100)
 
 pokracovac = True
+
 while pokracovac:
     data = tf.mesurments()
     distanceFront = data[0]
     log(data)
     if distanceFront > border_front:
-        tello.send_rc_control(0,20,0,0)
+        tello.send_rc_control(0,30,0,0)
     else:
         tello.send_rc_control(0,0,0,0)
         pokracovac = False
@@ -118,7 +148,7 @@ while True:
 
 
         if distance_front > border_front:
-            speedFront = 30
+            speedFront = 20
 
         else:
             speedFront = 0
