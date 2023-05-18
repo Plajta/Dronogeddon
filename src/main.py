@@ -17,7 +17,7 @@ border_front = 500
 start_time = time.time()
 log_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.gmtime())
 
-
+pokracovac = True
 
 mean = [[],[],[]]
 def distancemeter():
@@ -88,47 +88,48 @@ def videoRecorder():
     ToF
     """
 
-    if pokracovac:
-        data = distancemeter()
-            
+    
+    
+    data = distancemeter()
+        
 
-        distance_front = data[3]
-        distance_sideL = data[1]
-        distance_sideR = data[2]
-        speedFront = 0 
+    distance_front = data[3]
+    distance_sideL = data[1]
+    distance_sideR = data[2]
+    speedFront = 0 
+    speedSide = 0
+
+
+    if distance_sideL + distance_sideR < side_margin_high * 2:
+        local_side_margin_high = (distance_sideL + distance_sideR)/2
+        local_side_margin_low = local_side_margin_high - 300
+        log(f"{data} || soucet:{distance_sideL + distance_sideR} True H:{local_side_margin_high} L:{local_side_margin_low}")
+
+    else:
+        local_side_margin_high = side_margin_high
+        local_side_margin_low = side_margin_low
+        log(f"{data} || soucet:{distance_sideL + distance_sideR} False H:{local_side_margin_high} L:{local_side_margin_low}")
+
+    if distance_sideR < local_side_margin_low:
+        speedSide = -20
+
+    elif distance_sideR > local_side_margin_high:
+        speedSide = 20
+
+    else:
         speedSide = 0
 
 
-        if distance_sideL + distance_sideR < side_margin_high * 2:
-            local_side_margin_high = (distance_sideL + distance_sideR)/2
-            local_side_margin_low = local_side_margin_high - 300
-            log(f"{data} || soucet:{distance_sideL + distance_sideR} True H:{local_side_margin_high} L:{local_side_margin_low}")
+    if distance_front > border_front:
+        speedFront = 30
 
-        else:
-            local_side_margin_high = side_margin_high
-            local_side_margin_low = side_margin_low
-            log(f"{data} || soucet:{distance_sideL + distance_sideR} False H:{local_side_margin_high} L:{local_side_margin_low}")
+    else:
+        speedFront = 0
+        tello.rotate_counter_clockwise(90)
 
-        if distance_sideR < local_side_margin_low:
-            speedSide = -20
+    instructions_ToF.put([speedSide, speedFront])
 
-        elif distance_sideR > local_side_margin_high:
-            speedSide = 20
-
-        else:
-            speedSide = 0
-
-
-        if distance_front > border_front:
-            speedFront = 30
-
-        else:
-            speedFront = 0
-            pokracovac = False
-
-        instructions_ToF.put([speedSide, speedFront])
-
-        return image
+    return image
 
 def process_instructions():
     while True: #i hate this
@@ -141,7 +142,7 @@ def process_instructions():
             instructions_cam.queue.clear()
 
         instruction_ToF = instructions_ToF.get()
-        with instructions_cam.mutex:
+        with instructions_ToF.mutex:
             instruction_ToF.queue.clear()
 
         print("OUT CAM:")
@@ -178,7 +179,6 @@ log("tello takeoff")
 tello.takeoff()
 #tello.move_up(100)
 
-pokracovac = True
 while pokracovac:
     data = tf.mesurments()
     distanceFront = data[0]
