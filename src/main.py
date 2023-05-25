@@ -16,8 +16,12 @@ border_front = 500
 
 start_time = time.time()
 log_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.gmtime())
+font = cv2.FONT_HERSHEY_SIMPLEX
 
 pokracovac = True
+zastavovac = False
+
+
 
 mean = [[],[],[]]
 def distancemeter():
@@ -33,7 +37,7 @@ def distancemeter():
         output.append(0)
         for k in j:
             output[i+3] += k
-        output[i+3] /= len(j)
+        output[i+3] = round(output[i+3] / len(j))
 
     return(output)
 
@@ -58,16 +62,43 @@ def Convert_to_Instructions(y_deviation, x_deviation, ob_area):
 
 def stop_drone():
     tello.land()
+    tello.streamoff()
     instructor.join()
+    zastavovac = True
     exit(1)
 
 def videoRecorder():
     image = frame_read.frame
 
+    data = distancemeter()
 
     """
     CAMERA  
     """
+    cv2.putText(image, 
+                f"{round(time.time()-start_time, 2)}s", 
+                (10, 20), 
+                font, 1/2, 
+                (0, 255, 255),
+                2,
+                cv2.LINE_4) 
+    
+    cv2.putText(image, 
+                f"{log_time}", 
+                (770, 20), 
+                font, 1/2, 
+                (0, 255, 255), 
+                2, 
+                cv2.LINE_4) 
+    
+    cv2.putText(image, 
+            f"{data}", 
+            (10, 700), 
+            font, 1/2, 
+            (255, 255, 255), 
+            2, 
+            cv2.LINE_4) 
+    
     torch_tensor = convert_to_tensor(image)
 
     output = model(torch_tensor)
@@ -89,8 +120,6 @@ def videoRecorder():
     """
 
     
-    
-    data = distancemeter()
         
 
     distance_front = data[3]
@@ -127,34 +156,38 @@ def videoRecorder():
         speedFront = 0
         tello.rotate_counter_clockwise(90)
 
-    #instructions_ToF.put([speedSide, speedFront])
-    tello.send_rc_control(speedSide,speedFront,0,0)
+    instructions_ToF.put([speedSide, speedFront])
+    #tello.send_rc_control(speedSide,speedFront,0,0)
     return image
 
 def process_instructions():
-    while True: #i hate this
-        print(1)
+    while zastavovac == False: #i hate this
         """
         CAMERA
         """
-        instruction_cam = instructions_cam.get()
-        with instructions_cam.mutex:
+        if instructions_cam.empty() == False or instructions_ToF == False :
+            instruction_cam = instructions_cam.get()
+
             instructions_cam.queue.clear()
 
-        instruction_ToF = instructions_ToF.get()
-        with instructions_ToF.mutex:
-            instruction_ToF.queue.clear()
+            print(2)
 
-        print("OUT CAM:")
-        print(instruction_cam)
-        print("OUT ToF:")
-        print(instruction_ToF)
+            instruction_ToF = instructions_ToF.get()
+            instructions_ToF.queue.clear()
 
-        """
-        ToF
-        """
+            print(3)
 
-        tello.send_rc_control(instruction_ToF[0],instruction_ToF[1],0,0)
+            print("OUT CAM:")
+            print(instruction_cam)
+            print("OUT ToF:")
+            print(instruction_ToF)
+
+            """
+            ToF
+            """
+
+            print(instruction_ToF[0],instruction_ToF[1],0,0)
+            tello.send_rc_control(instruction_ToF[0],instruction_ToF[1],0,0)
 
 
 log_pad = open(f"src/Flight_logs/txt/flight_log_{log_time}.txt", 'w')
@@ -174,7 +207,8 @@ keepRecording = True
 tello.streamon()
 frame_read = tello.get_frame_read()
 instructor = Thread(target=process_instructions)
-instructor.start()
+
+
 
 log("tello takeoff")
 tello.takeoff()
@@ -191,6 +225,10 @@ while pokracovac:
         pokracovac = False
 
 video_out = cv2.VideoWriter(f'src/Flight_logs/video/flight_log_{log_time}.mkv', cv2.VideoWriter_fourcc(*'XVID'), 30, (480, 640)) #TODO: check if correct
+
+img_out = videoRecorder()
+instructor.start()
+
 while True:
     img_out = videoRecorder()
     video_out.write(img_out)
