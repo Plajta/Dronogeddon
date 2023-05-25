@@ -5,3 +5,5 @@ numpy
 matplotlib
 pyyaml
 customtkinter
+torchvision
+torch
