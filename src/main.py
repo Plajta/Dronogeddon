@@ -75,29 +75,7 @@ def videoRecorder():
     """
     CAMERA  
     """
-    cv2.putText(image, 
-                f"{round(time.time()-start_time, 2)}s", 
-                (10, 20), 
-                font, 1/2, 
-                (0, 255, 255),
-                2,
-                cv2.LINE_4) 
     
-    cv2.putText(image, 
-                f"{log_time}", 
-                (770, 20), 
-                font, 1/2, 
-                (0, 255, 255), 
-                2, 
-                cv2.LINE_4) 
-    
-    cv2.putText(image, 
-            f"{data}", 
-            (10, 700), 
-            font, 1/2, 
-            (255, 255, 255), 
-            2, 
-            cv2.LINE_4) 
     
     torch_tensor = convert_to_tensor(image)
 
@@ -112,7 +90,7 @@ def videoRecorder():
         instruction = Convert_to_Instructions(y_dev, x_dev, area)
         #print("IN:")
         #print(instruction)
-
+        instructions_cam.queue.clear()
         instructions_cam.put(instruction)
 
     """
@@ -120,8 +98,6 @@ def videoRecorder():
     """
 
     
-        
-
     distance_front = data[3]
     distance_sideL = data[1]
     distance_sideR = data[2]
@@ -156,6 +132,8 @@ def videoRecorder():
         speedFront = 0
         tello.rotate_counter_clockwise(90)
 
+    print([speedSide, speedFront])
+    instructions_ToF.queue.clear()
     instructions_ToF.put([speedSide, speedFront])
     #tello.send_rc_control(speedSide,speedFront,0,0)
     return image
@@ -165,20 +143,18 @@ def process_instructions():
         """
         CAMERA
         """
-        if instructions_cam.empty() == False or instructions_ToF == False :
+        print(f"cam {instructions_cam.empty() == False} tof {instructions_ToF.empty() == False}")
+
+        if instructions_cam.empty() == False :
             instruction_cam = instructions_cam.get()
-
-            instructions_cam.queue.clear()
-
-            print(2)
-
-            instruction_ToF = instructions_ToF.get()
-            instructions_ToF.queue.clear()
-
-            print(3)
 
             print("OUT CAM:")
             print(instruction_cam)
+
+        if instructions_ToF.empty() == False :
+
+            instruction_ToF = instructions_ToF.get()
+            
             print("OUT ToF:")
             print(instruction_ToF)
 
@@ -186,7 +162,7 @@ def process_instructions():
             ToF
             """
 
-            print(instruction_ToF[0],instruction_ToF[1],0,0)
+            print([instruction_ToF[0],instruction_ToF[1],0,0])
             tello.send_rc_control(instruction_ToF[0],instruction_ToF[1],0,0)
 
 
