@@ -12,7 +12,8 @@ from neural.pretrained import model, convert_to_tensor, process_data, compute_de
 
 side_margin_low = 800
 side_margin_high = 1300
-border_front = 500
+side_margin_ignore = 1500
+border_front = 550
 
 start_time = time.time()
 log_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.gmtime())
@@ -62,9 +63,11 @@ def Convert_to_Instructions(y_deviation, x_deviation, ob_area):
 
 def stop_drone():
     tello.land()
-    tello.streamoff()
-    instructor.join()
     zastavovac = True
+    video_out.release()
+    tello.streamoff()
+    log_pad.close()
+    instructor.join()
     exit(1)
 
 def videoRecorder():
@@ -77,21 +80,21 @@ def videoRecorder():
     """
     
     
-    torch_tensor = convert_to_tensor(image)
+    # torch_tensor = convert_to_tensor(image)
 
-    output = model(torch_tensor)
-    result = process_data(output, image)
-    if len(result) != 0: #just when the data is avaliable
-        y_dev, x_dev, area = compute_dev(result, image)
+    # output = model(torch_tensor)
+    # result = process_data(output, image)
+    # if len(result) != 0: #just when the data is avaliable
+    #     y_dev, x_dev, area = compute_dev(result, image)
 
-        y_dev = round(y_dev / SCREEN_CENTER[0], 2)
-        x_dev = round(x_dev / SCREEN_CENTER[1], 2)
+    #     y_dev = round(y_dev / SCREEN_CENTER[0], 2)
+    #     x_dev = round(x_dev / SCREEN_CENTER[1], 2)
 
-        instruction = Convert_to_Instructions(y_dev, x_dev, area)
-        #print("IN:")
-        #print(instruction)
-        instructions_cam.queue.clear()
-        instructions_cam.put(instruction)
+    #     instruction = Convert_to_Instructions(y_dev, x_dev, area)
+    #     #print("IN:")
+    #     #print(instruction)
+    #     instructions_cam.queue.clear()
+    #     instructions_cam.put(instruction)
 
     """
     ToF
@@ -115,7 +118,9 @@ def videoRecorder():
         local_side_margin_low = side_margin_low
         log(f"{data} || soucet:{distance_sideL + distance_sideR} False H:{local_side_margin_high} L:{local_side_margin_low}")
 
-    if distance_sideR < local_side_margin_low:
+    if distance_sideR > side_margin_ignore:
+        speedSide = 0
+    elif distance_sideR < local_side_margin_low:
         speedSide = -20
 
     elif distance_sideR > local_side_margin_high:
@@ -143,7 +148,6 @@ def process_instructions():
         """
         CAMERA
         """
-        print(f"cam {instructions_cam.empty() == False} tof {instructions_ToF.empty() == False}")
 
         if instructions_cam.empty() == False :
             instruction_cam = instructions_cam.get()
@@ -179,10 +183,11 @@ instructions_cam = Queue()
 instructions_ToF = Queue()
 
 tello.connect(False)
-keepRecording = True
 tello.streamon()
 frame_read = tello.get_frame_read()
+
 instructor = Thread(target=process_instructions)
+
 
 
 
