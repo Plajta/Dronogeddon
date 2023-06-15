@@ -1,6 +1,8 @@
 from torchvision.models.detection import fasterrcnn_resnet50_fpn_v2, FasterRCNN_ResNet50_FPN_V2_Weights
 import torchinfo
-import torch
+import os
+
+print(os.getcwd())
 
 # Step 1: Initialize model with the best available weights
 weights = FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT
