@@ -17,3 +17,8 @@ human-detection-dataset
 mp_env
 secret.yml
 sender.yml
+
+#door detector
+/src/neural/dataset/test
+/src/neural/dataset/train
+/src/neural/dataset/valid
