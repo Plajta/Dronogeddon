@@ -197,6 +197,7 @@ void setup()
       Serial.println(i);
       while (1);
     }
+    sensor[i].setDistanceMode(VL53L1X::Short);
 
     // Each sensor must have its address changed to a unique value other than
     // the default of 0x29 (except for the last one, which could be left at

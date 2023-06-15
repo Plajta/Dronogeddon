@@ -62,8 +62,9 @@ def Convert_to_Instructions(y_deviation, x_deviation, ob_area):
     return [in2, in1]
 
 def stop_drone():
+    tello.send_rc_control(0,0,0,0)
     print("stop")
-    tello.land()
+    #tello.land()
     zastavovac.set()
     print(f"zastavovac {zastavovac}")
     video_out.release()
@@ -86,11 +87,13 @@ def video_recording():
     video_out = cv2.VideoWriter(f'src/Flight_logs/video/flight_log_{log_time}.mkv', cv2.VideoWriter_fourcc(*'XVID'), 30, (width, height))
     data = tf.mesurments()
     while not zastavovac.is_set():
-
         img_out = frame_read.frame
 
-        if instructions_ToF.empty() == False :
-            data = instructions_ToF.get()[2]
+        if telemetri.empty() == False :
+            data = telemetri.get()
+            print("video:")
+            print(data)
+
 
         cv2.putText(img_out, 
                     f"{round(time.time()-start_time, 2)}s", 
@@ -129,7 +132,6 @@ def video_recording():
 
 def AI():
     while not zastavovac.is_set():
-        print("AI běží")
         """
         AI
         """
@@ -160,13 +162,12 @@ def AI():
 
 def ToF():
     while not zastavovac.is_set():
-        print("tof běží")
         """
         ToF
         """
         data = distancemeter()
         
-        distance_front = data[3]
+        distance_front = data[0]
         distance_sideL = data[1]
         distance_sideR = data[2]
         speedFront = 0 
@@ -200,18 +201,17 @@ def ToF():
 
         else:
             speedFront = 0
-            tello.rotate_counter_clockwise(90)
+            #tello.rotate_counter_clockwise(90)
 
-        print([speedSide, speedFront])
         instructions_ToF.queue.clear()
-        instructions_ToF.put([speedSide, speedFront,data])
+        instructions_ToF.put([speedSide, speedFront])
+        telemetri.put([speedSide, speedFront,data])
         #tello.send_rc_control(speedSide,speedFront,0,0)
 
 
 def process_instructions():
     while not zastavovac.is_set(): #i hate this
-        time.sleep(0.5)
-        print("instruktor běží")
+
         """
         CAMERA
         """
@@ -233,8 +233,7 @@ def process_instructions():
             ToF
             """
 
-            print([instruction_ToF[0],instruction_ToF[1],0,0])
-            tello.send_rc_control(instruction_ToF[0],instruction_ToF[1],0,0)
+            #tello.send_rc_control(instruction_ToF[0],instruction_ToF[1],0,0)
 
 
 log_pad = open(f"src/Flight_logs/txt/flight_log_{log_time}.txt", 'w')
@@ -248,6 +247,7 @@ def log(text="", entr="\n"):
 tello = Tello()
 instructions_cam = Queue()
 instructions_ToF = Queue()
+telemetri = Queue()
 pictures = Queue()
 
 tello.connect(False)
@@ -263,10 +263,11 @@ videoRecorder = Thread(target=video_recording)
 videoRecorder.start()
 
 log("tello takeoff")
-tello.takeoff()
+ToFmeter.start()
+#tello.takeoff()
 #tello.move_up(100)
 
-ToFmeter.start()
+
 AImeter.start()
 instructor.start()
 
