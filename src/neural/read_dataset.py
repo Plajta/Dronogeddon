@@ -3,10 +3,15 @@ from torchvision.io import read_image
 from torch.utils.data import DataLoader
 
 import os
+import torchvision.transforms as transforms
+import cv2
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use("TkAgg")
 
+transform = transforms.Compose([
+    transforms.ToTensor()
+])
 
 class DoorsDataset(Dataset):
     def __init__(self, type):
@@ -48,7 +53,20 @@ class DoorsDataset(Dataset):
             #read image
             img_path = os.path.join(path_img, filename.replace(".txt", ".jpg"))
             img = read_image(img_path)
-            output_images.append(img)
+            
+            #convert to size 640x480
+            R = img[0, :, :].detach().cpu().numpy()
+            G = img[1, :, :].detach().cpu().numpy()
+            B = img[2, :, :].detach().cpu().numpy()
+
+            R = cv2.resize(R, dsize=(640, 480), interpolation=cv2.INTER_LINEAR)
+            G = cv2.resize(G, dsize=(640, 480), interpolation=cv2.INTER_LINEAR)
+            B = cv2.resize(B, dsize=(640, 480), interpolation=cv2.INTER_LINEAR)
+            
+            img_resized = cv2.merge((R, G, B))
+            tensor_resized = transform(img_resized)
+
+            output_images.append(tensor_resized)
 
         return output_labels, output_images
     
