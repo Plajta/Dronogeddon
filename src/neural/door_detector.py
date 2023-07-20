@@ -7,6 +7,8 @@ import Wandb
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.optim import lr_scheduler
+import torch
 
 device = "CPU"
 
@@ -23,6 +25,7 @@ class DoorFC(nn.Module):
 class DoorRCNN:
     def __init__(self):
         super(DoorRCNN, self).__init__()
+        self.model_iter = 0
         self.config = {
             "epochs": 10,
             "optimizer": "adam",
@@ -33,22 +36,29 @@ class DoorRCNN:
         self.weights = ResNet18_Weights.DEFAULT
         self.model = resnet18(weights=self.weights)
 
-    def train_net(self):
-        pass
+    def train_net(self, train):
+        self.model.train()
+        correct = 0
+        log_i = 0
 
-    def test_net(self):
+        for i, (data, target) in enumerate(train):
+            log_i += 1
+            self.optimizer.zero_grad()
+            output_bbox, output_class = self.model(data)
+            loss = nn.NLLLoss()
+
+
+    def test_net(self, test):
         pass
 
     def set_model_to_trainable(self):
         for param in self.model.parameters():
             param.requires_grad = False
 
-        torchinfo.summary(self.model, (1, 3, 640, 480))
-
         num_features = self.model.fc.in_features
         FC_append = DoorFC(num_features)
         self.model.fc = FC_append
-        
+
         torchinfo.summary(self.model, (1, 3, 640, 480))
 
     def forward(self, x):
@@ -59,11 +69,32 @@ class DoorRCNN:
     def run(self, train_loader, test_loader, valid_loader):
         self.set_model_to_trainable()
 
-        #Wandb.Init("DOOR-RCNN", self.config, "DOOR-RCNN run:" + str(self.model_iter))
-        
-        #for i, epoch in enumerate(range(self.config["epochs"])):
-            
+        self.optimizer = optim.SGD(self.model.fc.parameters(), lr=0.001, momentum=0.9)
+        self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=7, gamma=0.1)
 
+        Wandb.Init("DOOR-RCNN", self.config, "DOOR-RCNN run:" + str(self.model_iter))
+        
+        init_loss, init_acc = self.test_net(test_loader, Wandb.wandb)
+        Wandb.wandb.log({"test_acc": init_acc, "test_loss": init_loss})
+        for i, epoch in enumerate(range(self.config["epochs"])):
+
+            #train epoch and log
+            train_loss, train_acc = self.train_net(train_loader, Wandb.wandb)
+            print("train " + str(i) + "epoch")
+            Wandb.wandb.log({"train_acc": train_acc, "train_loss": train_loss})
+
+            #test epoch and log
+            test_loss, test_acc = self.test_net(test_loader, Wandb.wandb)
+            print("test " + str(i) + "epoch")
+            Wandb.wandb.log({"test_acc": test_acc, "test_loss": test_loss})
+
+            print("train loss:", train_loss, "train acc:", train_acc)
+            print("test loss:", test_loss, "test acc:", test_acc)
+
+            torch.save(self, os.getcwd() + "/src/neural/saved_models/" + str(self.model_iter) + str(epoch) + ".pth")
+
+        self.model_iter += 1
+        Wandb.End()
 
 DoorModel = DoorRCNN()
 DoorModel.run(train, test, validation)
