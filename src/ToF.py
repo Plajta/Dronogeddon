@@ -10,9 +10,12 @@ def mesurments():
     if len(responses) < 4:
         return mesurments()
     else:
+        #for i in range(1,4):
+            # if int(responses[i]) == 0:
+            #     responses[i] = "999"
         return [int(responses[1]),int(responses[2]),int(responses[3])]
     
 
 #while True:
-    mesurments()
+    print(mesurments())
 

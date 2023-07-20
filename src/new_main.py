@@ -64,7 +64,7 @@ def Convert_to_Instructions(y_deviation, x_deviation, ob_area):
 def stop_drone():
     tello.send_rc_control(0,0,0,0)
     print("stop")
-    #tello.land()
+    tello.land()
     zastavovac.set()
     print(f"zastavovac {zastavovac}")
     video_out.release()
@@ -85,7 +85,7 @@ def video_recording():
     frame_read = tello.get_frame_read()
     height, width, _ = frame_read.frame.shape
     video_out = cv2.VideoWriter(f'src/Flight_logs/video/flight_log_{log_time}.mkv', cv2.VideoWriter_fourcc(*'XVID'), 30, (width, height))
-    data = tf.mesurments()
+    data = [0,0,distancemeter()]
     while not zastavovac.is_set():
         img_out = frame_read.frame
 
@@ -112,7 +112,7 @@ def video_recording():
                     cv2.LINE_4) 
         
         cv2.putText(img_out, 
-                f"left: {data[1]} front: {data[0]} right: {data[2]}", 
+                f"left: {data[2][1]} front: {data[2][0]} right: {data[2][2]}", 
                 (10, 700), 
                 font, 1/2, 
                 (0, 255, 255), 
@@ -138,7 +138,6 @@ def AI():
         if pictures.empty() == False :
 
             image = pictures.get()
-
 
 
             torch_tensor = convert_to_tensor(image)
@@ -188,20 +187,17 @@ def ToF():
             speedSide = 0
         elif distance_sideR < local_side_margin_low:
             speedSide = -20
-
         elif distance_sideR > local_side_margin_high:
             speedSide = 20
-
         else:
             speedSide = 0
 
 
         if distance_front > border_front:
             speedFront = 30
-
         else:
             speedFront = 0
-            #tello.rotate_counter_clockwise(90)
+            tello.rotate_counter_clockwise(90)
 
         instructions_ToF.queue.clear()
         instructions_ToF.put([speedSide, speedFront])
@@ -233,7 +229,7 @@ def process_instructions():
             ToF
             """
 
-            #tello.send_rc_control(instruction_ToF[0],instruction_ToF[1],0,0)
+            tello.send_rc_control(instruction_ToF[0],instruction_ToF[1],0,0)
 
 
 log_pad = open(f"src/Flight_logs/txt/flight_log_{log_time}.txt", 'w')
@@ -259,16 +255,14 @@ ToFmeter = Thread(target=ToF)
 AImeter = Thread(target=AI)
 videoRecorder = Thread(target=video_recording)
 
-
 videoRecorder.start()
+time.sleep(10)
+tello.takeoff()
 
-log("tello takeoff")
 ToFmeter.start()
-#tello.takeoff()
+log("tello takeoff")
 #tello.move_up(100)
 
 
 AImeter.start()
 instructor.start()
-
-
