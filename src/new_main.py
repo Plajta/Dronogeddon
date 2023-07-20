@@ -84,7 +84,7 @@ def stop_drone():
 def video_recording():
     frame_read = tello.get_frame_read()
     height, width, _ = frame_read.frame.shape
-    video_out = cv2.VideoWriter(f'src/Flight_logs/video/flight_log_{log_time}.mkv', cv2.VideoWriter_fourcc(*'XVID'), 30, (width, height))
+    video_out = cv2.VideoWriter(f'src/Flight_logs/video/flight_log_{log_time}.mkv', cv2.VideoWriter_fourcc(*'XVID'), 20, (width, height))
     data = [0,0,distancemeter()]
     while not zastavovac.is_set():
         img_out = frame_read.frame
