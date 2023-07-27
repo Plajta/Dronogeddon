@@ -36,7 +36,7 @@ class DoorRCNN:
         self.weights = ResNet18_Weights.DEFAULT
         self.model = resnet18(weights=self.weights)
 
-    def train_net(self, train):
+    def train_net(self, train, wandb):
         self.model.train()
         correct = 0
         log_i = 0
@@ -47,8 +47,10 @@ class DoorRCNN:
             output_bbox, output_class = self.model(data)
             loss = nn.NLLLoss()
 
+            print(target)
 
-    def test_net(self, test):
+
+    def test_net(self, test, wandb):
         pass
 
     def set_model_to_trainable(self):
@@ -71,6 +73,10 @@ class DoorRCNN:
 
         self.optimizer = optim.SGD(self.model.fc.parameters(), lr=0.001, momentum=0.9)
         self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=7, gamma=0.1)
+
+        #test
+        self.train_net(train_loader)
+        return
 
         Wandb.Init("DOOR-RCNN", self.config, "DOOR-RCNN run:" + str(self.model_iter))
         
@@ -95,6 +101,8 @@ class DoorRCNN:
 
         self.model_iter += 1
         Wandb.End()
+
+print("model init")
 
 DoorModel = DoorRCNN()
 DoorModel.run(train, test, validation)
