@@ -46,36 +46,42 @@ class DoorCNN(nn.Module): #my own implementation :>
         self.pool3 = nn.AvgPool2d(9)
         self.b_norm3 = nn.BatchNorm2d(32)
 
-        self.conv4 = nn.Conv2d(128, 256, (9, 9))
-        self.pool4 = nn.MaxPool2d(20)
-        self.b_norm4 = nn.BatchNorm2d(32)
+        self.flatten = nn.Flatten()
 
-        self.conv5 = nn.Conv2d(256, 32, (3, 3))
-        self.pool5 = nn.MaxPool2d(40)
-        self.b_norm5 = nn.BatchNorm2d(32)
-
-        #fully connected
-        self.linear1 = nn.Linear(204281, 2048)
+        #fully connected - classification
+        self.linear1 = nn.Linear(768, 2048)
         self.drop1 = nn.Dropout(0.5)
-        self.b_norm_l1 = nn.BatchNorm1d(32)
+        self.b_norm_l1 = nn.BatchNorm1d(2048)
 
         self.linear2 = nn.Linear(2048, 1024)
         self.drop2 = nn.Dropout(0.5)
-        self.b_norm_l2 = nn.BatchNorm1d(32)
+        self.b_norm_l2 = nn.BatchNorm1d(1024)
 
         self.linear3 = nn.Linear(1024, 512)
         self.drop3 = nn.Dropout(0.5)
-        self.b_norm_l3 = nn.BatchNorm1d(32)
+        self.b_norm_l3 = nn.BatchNorm1d(512)
 
         self.linear4 = nn.Linear(512, 64)
         self.drop4 = nn.Dropout(0.5)
-        self.b_norm_l4 = nn.BatchNorm1d(32)
+        self.b_norm_l4 = nn.BatchNorm1d(64)
 
         self.linear5 = nn.Linear(64, 16)
         self.drop5 = nn.Dropout(0.5)
-        self.b_norm_l5 = nn.BatchNorm1d(32)
+        self.b_norm_l5 = nn.BatchNorm1d(16)
 
-        self.linear_fin = nn.Linear(16, 3)
+        self.linear_fin = nn.Linear(16, 1)
+
+        #fully connected - bbox prediction
+        self.linear1_bbox = nn.Linear(64, 128)
+        self.b_norm_bbox_l1 = nn.BatchNorm1d(128)
+        
+        self.linear2_bbox = nn.Linear(128, 64)
+        self.b_norm_bbox_l2 = nn.BatchNorm1d(64)
+
+        self.linear3_bbox = nn.Linear(64, 16)
+        self.b_norm_bbox_l3 = nn.BatchNorm1d(16)
+
+        self.linear_bbox_fin = nn.Linear(16, 5)
 
     def forward(self, x):
         #convolution
@@ -94,17 +100,9 @@ class DoorCNN(nn.Module): #my own implementation :>
         x = F.relu(x)
         x = self.drop3(x)
 
-        x = self.conv4(x)
-        x = self.pool4(x)
-        x = F.relu(x)
-        x = self.drop4(x)
+        x = self.flatten(x)
 
-        x = self.conv5(x)
-        x = self.pool5(x)
-        x = F.relu(x)
-        x = self.drop5(x)
-
-        #fully-connected
+        #fully-connected - classification
         x = self.linear1(x)
         x = self.drop1(x)
         x = F.relu(x)
@@ -125,27 +123,56 @@ class DoorCNN(nn.Module): #my own implementation :>
         x = F.relu(x)
         x = self.b_norm_l4(x)
 
+        x_bbox = self.linear1_bbox(x)
+
         x = self.linear5(x)
         x = self.drop5(x)
         x = F.relu(x)
         x = self.b_norm_l5(x)
 
-        pred = self.linear_fin(x)
-        return pred
+        pred_cls = self.linear_fin(x)
+
+        #fully connected - bbox prediction
+        x_bbox = self.b_norm_bbox_l1(x_bbox)
+
+        x_bbox = self.linear2_bbox(x_bbox)
+        x_bbox = self.b_norm_bbox_l2(x_bbox)
+
+        x_bbox = self.linear3_bbox(x_bbox)
+        x_bbox = self.b_norm_bbox_l3(x_bbox)
+
+        pred_bbox = self.linear_bbox_fin(x_bbox)
+
+        return pred_cls, pred_bbox
     
     def train_net(self, train):
-        self.model.train()
+        self.train()
         for X, y in train:
-            self.model(X)
+            output_cls, output_bbox = self(X)
+
+            target_cls = torch.tensor(list(map(int, y[0])))
+            target_bbox = torch.tensor(list(map(float, y[1])))
+
+            output_cls = torch.squeeze(output_cls)
+            target_cls = target_cls.to(torch.float32)
+
+            print(output_bbox)
+            print(target_bbox)
+
+            loss_cls = F.cross_entropy(output_cls, target_cls)
+            loss_bbox = F.smooth_l1_loss(output_bbox, target_bbox)
+
 
     def test_net(self, test):
         pass
 
     def run(self, train_loader, test_loader, valid_loader):
-        self.set_model_to_trainable()
 
-        self.optimizer = optim.SGD(self.model.fc.parameters(), lr=0.001, momentum=0.9)
+        self.optimizer = optim.SGD(self.parameters(), lr=0.001, momentum=0.9)
         self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=7, gamma=0.1)
+
+        #get info
+        torchinfo.summary(self, (1, 3, 640, 480))
 
         #test
         self.train_net(train_loader)
@@ -161,6 +188,7 @@ class DoorCNN(nn.Module): #my own implementation :>
             print("train " + str(i) + "epoch")
             Wandb.wandb.log({"train_acc": train_acc, "train_loss": train_loss})
 
+            
             #test epoch and log
             test_loss, test_acc = self.test_net(test_loader, Wandb.wandb)
             print("test " + str(i) + "epoch")
@@ -170,6 +198,7 @@ class DoorCNN(nn.Module): #my own implementation :>
             print("test loss:", test_loss, "test acc:", test_acc)
 
             torch.save(self, os.getcwd() + "/src/neural/saved_models/" + str(self.model_iter) + str(epoch) + ".pth")
+            
 
         self.model_iter += 1
         Wandb.End()
@@ -233,7 +262,7 @@ class DoorRCNN:
         
         init_loss, init_acc = self.test_net(test_loader, Wandb.wandb)
         Wandb.wandb.log({"test_acc": init_acc, "test_loss": init_loss})
-        for i, epoch in enumerate(range(self.config["epochs"])):
+        for i in range(self.config["epochs"]):
 
             #train epoch and log
             train_loss, train_acc = self.train_net(train_loader, Wandb.wandb)
@@ -248,14 +277,15 @@ class DoorRCNN:
             print("train loss:", train_loss, "train acc:", train_acc)
             print("test loss:", test_loss, "test acc:", test_acc)
 
-            torch.save(self, os.getcwd() + "/src/neural/saved_models/" + str(self.model_iter) + str(epoch) + ".pth")
+            torch.save(self, os.getcwd() + "/src/neural/saved_models/" + str(self.model_iter) + str(i) + ".pth")
 
         self.model_iter += 1
         Wandb.End()
 
 print("model init")
 
-DoorModel = DoorRCNN()
-DoorModel.run(train, test, validation)
+#DoorModel = DoorRCNN()
+#DoorModel.run(train, test, validation)
 
 MyDoorModel = DoorCNN()
+MyDoorModel.run(train, test, validation)

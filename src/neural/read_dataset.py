@@ -103,9 +103,6 @@ def inspect_dataset(index, dataloader):
 
     img_np = ImgTransform(img, True)
 
-    print(label)
-    print(img_np.shape)
-
     cls = label[0]
     if cls == "0":
         cls = "closed"
@@ -114,7 +111,6 @@ def inspect_dataset(index, dataloader):
     else: #cls == "2"
         cls = "fully open"
 
-    print(float(label[3]))
     x_center = round(float(label[1]) * img_np.shape[1])
     y_center = round(float(label[2]) * img_np.shape[0])
     width = round(float(label[3]) * img_np.shape[1])
@@ -122,12 +118,9 @@ def inspect_dataset(index, dataloader):
 
     start_x = x_center - round(width / 2)
     start_y = y_center - round(height / 2)
-    print(start_y)
 
     end_x = start_x + width
     end_y = start_y + height
-
-    print(end_y)
 
     cv2.rectangle(img_np, (start_x, start_y), (end_x, end_y), (0, 255, 0), 5)
     cv2.putText(img_np, cls, (start_x - 5, start_y - 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
