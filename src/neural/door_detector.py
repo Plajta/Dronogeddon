@@ -1,3 +1,8 @@
+#TODO: list for this model
+#1) add image pixel normalization to read_dataset
+#2) add logs to wandb
+#3) optimize
+
 from read_dataset import train, test, validation
 
 from torchvision.models import resnet18, ResNet18_Weights #fasterrcnn_resnet50_fpn_v2, FasterRCNN_ResNet50_FPN_V2_Weights
@@ -10,7 +15,12 @@ import torch.optim as optim
 from torch.optim import lr_scheduler
 import torch
 
+import cv2
+import numpy as np
+
 device = "CPU"
+LOG_FREQ = 5
+BATCH = 32
 
 class DoorFC(nn.Module):
     def __init__(self, in_features):
@@ -81,7 +91,7 @@ class DoorCNN(nn.Module): #my own implementation :>
         self.linear3_bbox = nn.Linear(64, 16)
         self.b_norm_bbox_l3 = nn.BatchNorm1d(16)
 
-        self.linear_bbox_fin = nn.Linear(16, 5)
+        self.linear_bbox_fin = nn.Linear(16, 4)
 
     def forward(self, x):
         #convolution
@@ -146,25 +156,76 @@ class DoorCNN(nn.Module): #my own implementation :>
         return pred_cls, pred_bbox
     
     def train_net(self, train):
+        idx = 0
+        total_loss = 0
+
         self.train()
         for X, y in train:
             output_cls, output_bbox = self(X)
 
             target_cls = torch.tensor(list(map(int, y[0])))
-            target_bbox = torch.tensor(list(map(float, y[1])))
+            target_bbox = y[1:5]
+            target_bbox = [[float(element) for element in row] for row in target_bbox]
+
+            target_bbox = torch.tensor(target_bbox)
+
+            target_bbox = target_bbox.transpose(0, 1) #TODO: check if correct
 
             output_cls = torch.squeeze(output_cls)
             target_cls = target_cls.to(torch.float32)
 
-            print(output_bbox)
-            print(target_bbox)
-
             loss_cls = F.cross_entropy(output_cls, target_cls)
-            loss_bbox = F.smooth_l1_loss(output_bbox, target_bbox)
+            loss_bbox = F.smooth_l1_loss(output_bbox, target_bbox) * 100 #scaling by 100 #TODO: check if correct
+
+            loss = loss_cls + loss_bbox
+
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+            idx += 1
+            total_loss += loss.item()
+            
+            if idx % LOG_FREQ == 0:
+                print("train loss: " + str(loss.item()))
+
+        return total_loss / (idx * BATCH)
 
 
     def test_net(self, test):
-        pass
+        self.eval()
+        idx = 0
+        correct = 0
+        total_loss = 0
+
+        for X, y in test:
+            output_cls, output_bbox = self(X)
+
+            target_cls = torch.tensor(list(map(int, y[0])))
+            target_bbox = y[1:5]
+            target_bbox = [[float(element) for element in row] for row in target_bbox]
+
+            target_bbox = torch.tensor(target_bbox)
+
+            target_bbox = target_bbox.transpose(0, 1) #TODO: check if correct
+
+            output_cls = torch.squeeze(output_cls)
+            target_cls = target_cls.to(torch.float32)
+
+            loss_cls = F.cross_entropy(output_cls, target_cls)
+            loss_bbox = F.smooth_l1_loss(output_bbox, target_bbox) * 100 #scaling by 100 #TODO: check if correct
+
+            loss = loss_cls + loss_bbox
+            total_loss += loss.item()
+
+            _, pred = torch.max(output_cls, 0)
+            correct += pred.eq(target_cls).sum().item()
+
+            idx += 1
+            if idx % LOG_FREQ == 0:
+                print("test loss: " + str(loss.item()), "test acc: " + str(correct / (idx * BATCH)))
+
+        return total_loss / (idx * BATCH), correct / (idx * BATCH)
 
     def run(self, train_loader, test_loader, valid_loader):
 
@@ -174,34 +235,34 @@ class DoorCNN(nn.Module): #my own implementation :>
         #get info
         torchinfo.summary(self, (1, 3, 640, 480))
 
-        #test
-        self.train_net(train_loader)
-
-        Wandb.Init("DOOR-RCNN", self.config, "DOOR-RCNN run:" + str(self.model_iter))
+        #Wandb.Init("DOOR-RCNN", self.config, "DOOR-RCNN run:" + str(self.model_iter))
         
-        init_loss, init_acc = self.test_net(test_loader, Wandb.wandb)
-        Wandb.wandb.log({"test_acc": init_acc, "test_loss": init_loss})
+        init_loss, init_acc = self.test_net(test_loader)
+        print(init_loss, init_acc)
+        #Wandb.wandb.log({"test_acc": init_acc, "test_loss": init_loss})
         for i, epoch in enumerate(range(self.config["epochs"])):
 
             #train epoch and log
-            train_loss, train_acc = self.train_net(train_loader, Wandb.wandb)
+            train_loss = self.train_net(train_loader)
+            print(train_loss)
             print("train " + str(i) + "epoch")
-            Wandb.wandb.log({"train_acc": train_acc, "train_loss": train_loss})
+            #Wandb.wandb.log({"train_acc": train_acc, "train_loss": train_loss})
 
             
             #test epoch and log
-            test_loss, test_acc = self.test_net(test_loader, Wandb.wandb)
+            test_loss, test_acc = self.test_net(test_loader)
+            print(test_loss, test_acc)
             print("test " + str(i) + "epoch")
-            Wandb.wandb.log({"test_acc": test_acc, "test_loss": test_loss})
+            #Wandb.wandb.log({"test_acc": test_acc, "test_loss": test_loss})
 
-            print("train loss:", train_loss, "train acc:", train_acc)
+            print("train loss:", train_loss)
             print("test loss:", test_loss, "test acc:", test_acc)
 
             torch.save(self, os.getcwd() + "/src/neural/saved_models/" + str(self.model_iter) + str(epoch) + ".pth")
             
 
         self.model_iter += 1
-        Wandb.End()
+        #Wandb.End()
 
 class DoorRCNN:
     def __init__(self):
@@ -282,10 +343,62 @@ class DoorRCNN:
         self.model_iter += 1
         Wandb.End()
 
-print("model init")
+def run_model():
+    #DoorModel = DoorRCNN()
+    #DoorModel.run(train, test, validation)
 
-#DoorModel = DoorRCNN()
-#DoorModel.run(train, test, validation)
+    MyDoorModel = DoorCNN()
+    MyDoorModel.run(train, test, validation)
 
-MyDoorModel = DoorCNN()
-MyDoorModel.run(train, test, validation)
+def model_inference(path):
+    #inference on notebook camera
+
+    model = torch.load(os.getcwd() + "/src/neural/saved_models/" + path)
+
+    vid = cv2.VideoCapture(0)
+    while True:
+        ret, frame = vid.read()
+
+        transposed_array = frame.transpose((2, 1, 0))
+        tensor = torch.tensor(transposed_array).unsqueeze(0).to(torch.float32)
+        out = model(tensor)
+        out_cls = out[0]
+        out_bbox = out[1]
+
+        out_cls = round(out_cls[0][0].item()) - 1 #TODO: check
+        out_bbox = out_bbox[0].detach().numpy()
+
+        cls = ""
+        if out_cls == "0":
+            cls = "closed"
+        elif out_cls == "1":
+            cls = "half open"
+        else: #cls == "2"
+            cls = "fully open"
+
+        x_center = round(float(out_bbox[0]) * frame.shape[1])
+        y_center = round(float(out_bbox[1]) * frame.shape[0])
+        width = round(float(out_bbox[2]) * frame.shape[1])
+        height = round(float(out_bbox[3]) * frame.shape[0])
+
+        start_x = x_center - round(width / 2)
+        start_y = y_center - round(height / 2)
+
+        end_x = start_x + width
+        end_y = start_y + height
+
+        cv2.rectangle(frame, (start_x, start_y), (end_x, end_y), (0, 255, 0), 5)
+        cv2.putText(frame, cls, (start_x - 5, start_y - 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+        print(cls, start_x, start_y, end_x, end_y)
+
+        cv2.imshow("frame", frame)
+
+        if cv2.waitKey(1) &0xFF == ord("q"):
+            break
+    
+    vid.release()
+    cv2.destroyAllWindows()
+
+#run_model()
+model_inference("010.pth")
