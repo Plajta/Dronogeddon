@@ -26,3 +26,7 @@ sender.yml
 #saved models directory
 !/src/neural/saved_models/.gitkeep
 /src/neural/saved_models/*
+
+#temp files
+/src/neural/__pycache__
+/wandb/

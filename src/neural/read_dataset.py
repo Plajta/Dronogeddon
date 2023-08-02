@@ -136,4 +136,4 @@ train = DataLoader(train_data, batch_size=32, shuffle=True)
 test = DataLoader(test_data, batch_size=32, shuffle=True)
 validation = DataLoader(valid_data, batch_size=32, shuffle=True)
 
-#inspect_dataset(900, train)
+inspect_dataset(300, train)

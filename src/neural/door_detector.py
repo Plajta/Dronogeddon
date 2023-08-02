@@ -1,6 +1,6 @@
 #TODO: list for this model
-#1) add image pixel normalization to read_dataset
-#2) add logs to wandb
+#1) add image pixel normalization to read_dataset - already done
+#2) add logs to wandb - done
 #3) optimize
 
 from read_dataset import train, test, validation
@@ -37,7 +37,7 @@ class DoorCNN(nn.Module): #my own implementation :>
         super(DoorCNN, self).__init__()
         self.model_iter = 0
         self.config = {
-            "epochs": 20,
+            "epochs": 10,
             "optimizer": "adam",
             "metric": "accuracy",
             "log_freq": 100
@@ -82,7 +82,7 @@ class DoorCNN(nn.Module): #my own implementation :>
         self.linear_fin = nn.Linear(16, 1)
 
         #fully connected - bbox prediction
-        self.linear1_bbox = nn.Linear(64, 128)
+        self.linear1_bbox = nn.Linear(768, 128)
         self.b_norm_bbox_l1 = nn.BatchNorm1d(128)
         
         self.linear2_bbox = nn.Linear(128, 64)
@@ -112,6 +112,9 @@ class DoorCNN(nn.Module): #my own implementation :>
 
         x = self.flatten(x)
 
+        #fully connected - bbox prediction
+        x_bbox = self.linear1_bbox(x)
+        
         #fully-connected - classification
         x = self.linear1(x)
         x = self.drop1(x)
@@ -132,8 +135,6 @@ class DoorCNN(nn.Module): #my own implementation :>
         x = self.drop4(x)
         x = F.relu(x)
         x = self.b_norm_l4(x)
-
-        x_bbox = self.linear1_bbox(x)
 
         x = self.linear5(x)
         x = self.drop5(x)
@@ -188,6 +189,8 @@ class DoorCNN(nn.Module): #my own implementation :>
             
             if idx % LOG_FREQ == 0:
                 print("train loss: " + str(loss.item()))
+                Wandb.wandb.log({"train_loss": loss.item()})
+                
 
         return total_loss / (idx * BATCH)
 
@@ -224,6 +227,7 @@ class DoorCNN(nn.Module): #my own implementation :>
             idx += 1
             if idx % LOG_FREQ == 0:
                 print("test loss: " + str(loss.item()), "test acc: " + str(correct / (idx * BATCH)))
+                Wandb.wandb.log({"test_loss": loss.item(), "test_acc": correct / (idx * BATCH)})
 
         return total_loss / (idx * BATCH), correct / (idx * BATCH)
 
@@ -235,7 +239,7 @@ class DoorCNN(nn.Module): #my own implementation :>
         #get info
         torchinfo.summary(self, (1, 3, 640, 480))
 
-        #Wandb.Init("DOOR-RCNN", self.config, "DOOR-RCNN run:" + str(self.model_iter))
+        Wandb.Init("DOOR-RCNN", self.config, "DOOR-RCNN run:" + str(self.model_iter))
         
         init_loss, init_acc = self.test_net(test_loader)
         print(init_loss, init_acc)
@@ -246,14 +250,15 @@ class DoorCNN(nn.Module): #my own implementation :>
             train_loss = self.train_net(train_loader)
             print(train_loss)
             print("train " + str(i) + "epoch")
-            #Wandb.wandb.log({"train_acc": train_acc, "train_loss": train_loss})
+            
+            Wandb.wandb.log({"train_loss": train_loss})
 
             
             #test epoch and log
             test_loss, test_acc = self.test_net(test_loader)
             print(test_loss, test_acc)
             print("test " + str(i) + "epoch")
-            #Wandb.wandb.log({"test_acc": test_acc, "test_loss": test_loss})
+            Wandb.wandb.log({"test_acc": test_acc, "test_loss": test_loss})
 
             print("train loss:", train_loss)
             print("test loss:", test_loss, "test acc:", test_acc)
@@ -262,7 +267,7 @@ class DoorCNN(nn.Module): #my own implementation :>
             
 
         self.model_iter += 1
-        #Wandb.End()
+        Wandb.End()
 
 class DoorRCNN:
     def __init__(self):
@@ -400,5 +405,5 @@ def model_inference(path):
     vid.release()
     cv2.destroyAllWindows()
 
-#run_model()
-model_inference("010.pth")
+run_model()
+#model_inference("010.pth")

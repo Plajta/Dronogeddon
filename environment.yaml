@@ -1,0 +1,16 @@
+name: dronogeddon
+channels:
+  - conda-forge
+  - defaults
+  - pytorch
+depencies:
+  - python=3.10.6
+  - pytorch=1.7.0
+  - cudatoolkit=11.8
+  - torchvision
+  - torchaudio
+  - opencv
+  - numpy
+  - wandb
+  - pip:
+    - torchinfo
