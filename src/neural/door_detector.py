@@ -37,33 +37,37 @@ class DoorCNN(nn.Module): #my own implementation :>
         super(DoorCNN, self).__init__()
         self.model_iter = 0
         self.config = {
-            "epochs": 10,
+            "epochs": 50,
             "optimizer": "adam",
             "metric": "accuracy",
             "log_freq": 100
         }
 
         #convolutional
-        self.conv1 = nn.Conv2d(3, 32, (3, 3), dilation=(5, 5))
-        self.pool1 = nn.AvgPool2d(3)
-        self.b_norm1 = nn.BatchNorm2d(32) #after ReLU
+        self.conv1 = nn.Conv2d(3, 32, (3, 3))
+        self.pool1 = nn.AvgPool2d(2)
+        self.b_norm1 = nn.BatchNorm2d(32)
 
-        self.conv2 = nn.Conv2d(32, 64, (3, 3), dilation=(3, 3))
-        self.pool2 = nn.AvgPool2d(6)
+        self.conv2 = nn.Conv2d(32, 128, (3, 3))
+        self.pool2 = nn.AvgPool2d(2)
         self.b_norm2 = nn.BatchNorm2d(32)
 
-        self.conv3 = nn.Conv2d(64, 128, (3, 3))
-        self.pool3 = nn.AvgPool2d(9)
+        self.conv3 = nn.Conv2d(128, 128, (3, 3))
+        self.pool3 = nn.AvgPool2d(2)
         self.b_norm3 = nn.BatchNorm2d(32)
+
+        self.conv4 = nn.Conv2d(128, 32, (3, 3))
+        self.pool4 = nn.MaxPool2d(2)
+        self.b_norm4 = nn.BatchNorm2d(32)
 
         self.flatten = nn.Flatten()
 
         #fully connected - classification
-        self.linear1 = nn.Linear(768, 2048)
+        self.linear1 = nn.Linear(34048, 1024)
         self.drop1 = nn.Dropout(0.5)
-        self.b_norm_l1 = nn.BatchNorm1d(2048)
+        self.b_norm_l1 = nn.BatchNorm1d(1024)
 
-        self.linear2 = nn.Linear(2048, 1024)
+        self.linear2 = nn.Linear(1024, 1024)
         self.drop2 = nn.Dropout(0.5)
         self.b_norm_l2 = nn.BatchNorm1d(1024)
 
@@ -82,14 +86,17 @@ class DoorCNN(nn.Module): #my own implementation :>
         self.linear_fin = nn.Linear(16, 1)
 
         #fully connected - bbox prediction
-        self.linear1_bbox = nn.Linear(768, 128)
-        self.b_norm_bbox_l1 = nn.BatchNorm1d(128)
-        
-        self.linear2_bbox = nn.Linear(128, 64)
-        self.b_norm_bbox_l2 = nn.BatchNorm1d(64)
+        self.linear1_bbox = nn.Linear(34048, 512)
+        self.b_norm_bbox_l1 = nn.BatchNorm1d(512)
 
-        self.linear3_bbox = nn.Linear(64, 16)
-        self.b_norm_bbox_l3 = nn.BatchNorm1d(16)
+        self.linear2_bbox = nn.Linear(512, 128)
+        self.b_norm_bbox_l2 = nn.BatchNorm1d(128)
+        
+        self.linear3_bbox = nn.Linear(128, 64)
+        self.b_norm_bbox_l3 = nn.BatchNorm1d(64)
+
+        self.linear4_bbox = nn.Linear(64, 16)
+        self.b_norm_bbox_l4 = nn.BatchNorm1d(16)
 
         self.linear_bbox_fin = nn.Linear(16, 4)
 
@@ -109,6 +116,11 @@ class DoorCNN(nn.Module): #my own implementation :>
         x = self.pool3(x)
         x = F.relu(x)
         x = self.drop3(x)
+
+        x = self.conv4(x)
+        x = self.pool4(x)
+        x = F.relu(x)
+        x = self.drop4(x)
 
         x = self.flatten(x)
 
@@ -152,7 +164,11 @@ class DoorCNN(nn.Module): #my own implementation :>
         x_bbox = self.linear3_bbox(x_bbox)
         x_bbox = self.b_norm_bbox_l3(x_bbox)
 
+        x_bbox = self.linear4_bbox(x_bbox)
+        x_bbox = self.b_norm_bbox_l4(x_bbox)
+
         x_bbox = self.linear_bbox_fin(x_bbox)
+
         pred_bbox = F.sigmoid(x_bbox)
 
         return pred_cls, pred_bbox
@@ -247,7 +263,7 @@ class DoorCNN(nn.Module): #my own implementation :>
         
         init_loss, init_acc = self.test_net(test_loader)
         print(init_loss, init_acc)
-        #Wandb.wandb.log({"test_acc": init_acc, "test_loss": init_loss})
+        Wandb.wandb.log({"test_acc": init_acc, "test_loss": init_loss})
         for i, epoch in enumerate(range(self.config["epochs"])):
 
             #train epoch and log
@@ -408,5 +424,5 @@ def model_inference(path):
     vid.release()
     cv2.destroyAllWindows()
 
-#run_model()
-model_inference("run1/01.pth")
+run_model()
+#model_inference("run2/00.pth")
