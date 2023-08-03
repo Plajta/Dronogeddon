@@ -152,7 +152,8 @@ class DoorCNN(nn.Module): #my own implementation :>
         x_bbox = self.linear3_bbox(x_bbox)
         x_bbox = self.b_norm_bbox_l3(x_bbox)
 
-        pred_bbox = self.linear_bbox_fin(x_bbox)
+        x_bbox = self.linear_bbox_fin(x_bbox)
+        pred_bbox = F.sigmoid(x_bbox)
 
         return pred_cls, pred_bbox
     
@@ -179,6 +180,7 @@ class DoorCNN(nn.Module): #my own implementation :>
             loss_bbox = F.smooth_l1_loss(output_bbox, target_bbox) * 100 #scaling by 100 #TODO: check if correct
 
             loss = loss_cls + loss_bbox
+            loss = loss / BATCH
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -219,6 +221,8 @@ class DoorCNN(nn.Module): #my own implementation :>
             loss_bbox = F.smooth_l1_loss(output_bbox, target_bbox) * 100 #scaling by 100 #TODO: check if correct
 
             loss = loss_cls + loss_bbox
+            loss = loss / BATCH
+
             total_loss += loss.item()
 
             _, pred = torch.max(output_cls, 0)
@@ -239,7 +243,7 @@ class DoorCNN(nn.Module): #my own implementation :>
         #get info
         torchinfo.summary(self, (1, 3, 640, 480))
 
-        Wandb.Init("DOOR-RCNN", self.config, "DOOR-RCNN run:" + str(self.model_iter))
+        Wandb.Init("DOOR-RCNN", self.config, "DOOR-CNN run:" + str(self.model_iter))
         
         init_loss, init_acc = self.test_net(test_loader)
         print(init_loss, init_acc)
@@ -249,8 +253,7 @@ class DoorCNN(nn.Module): #my own implementation :>
             #train epoch and log
             train_loss = self.train_net(train_loader)
             print(train_loss)
-            print("train " + str(i) + "epoch")
-            
+            print("train " + str(i) + " epoch")
             Wandb.wandb.log({"train_loss": train_loss})
 
             
@@ -405,5 +408,5 @@ def model_inference(path):
     vid.release()
     cv2.destroyAllWindows()
 
-run_model()
-#model_inference("010.pth")
+#run_model()
+model_inference("run1/01.pth")
