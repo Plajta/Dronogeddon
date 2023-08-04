@@ -215,14 +215,16 @@ class DoorCNN(nn.Module): #my own implementation :>
             self.optimizer.step()
 
             idx += 1
-            total_loss += loss.item()
+            total_loss += loss.detach().item()
             
             if idx % LOG_FREQ == 0:
                 print("train loss: " + str(loss.item()))
                 Wandb.wandb.log({"train_loss": loss.item()})
                 
+            #free the memory
+            torch.cuda.empty_cache()
 
-        return total_loss / (idx * BATCH)
+        return total_loss / idx
 
 
     def test_net(self, test):
@@ -256,17 +258,21 @@ class DoorCNN(nn.Module): #my own implementation :>
             loss = loss_cls + loss_bbox
             loss = loss / BATCH
 
-            total_loss += loss.item()
+            total_loss += loss.detach().item()
 
-            _, pred = torch.max(output_cls, 0)
-            correct += pred.eq(target_cls).sum().item()
+            for i, elem in enumerate(output_cls):
+                if elem == target_cls[i]:
+                    correct += 1
 
             idx += 1
             if idx % LOG_FREQ == 0:
                 print("test loss: " + str(loss.item()), "test acc: " + str(correct / (idx * BATCH)))
                 Wandb.wandb.log({"test_loss": loss.item(), "test_acc": correct / (idx * BATCH)})
 
-        return total_loss / (idx * BATCH), correct / (idx * BATCH)
+            #free the memory
+            torch.cuda.empty_cache()
+
+        return total_loss / idx, correct / (idx * BATCH)
 
     def run(self, train_loader, test_loader, valid_loader):
 
@@ -277,6 +283,9 @@ class DoorCNN(nn.Module): #my own implementation :>
         torchinfo.summary(self, (1, 3, 640, 480))
 
         self.to(DEVICE)
+
+        #test
+        init_loss, init_acc = self.test_net(test_loader)
 
         Wandb.Init("DOOR-RCNN", self.config, "DOOR-CNN run:" + str(self.model_iter))
         
@@ -403,13 +412,13 @@ def model_inference(path):
         ret, frame = vid.read()
 
         transposed_array = frame.transpose((2, 1, 0))
-        tensor = torch.tensor(transposed_array).unsqueeze(0).to(torch.float32)
+        tensor = torch.tensor(transposed_array).unsqueeze(0).to(torch.float32).to(DEVICE)
         out = model(tensor)
         out_cls = out[0]
         out_bbox = out[1]
 
         out_cls = round(out_cls[0][0].item()) - 1 #TODO: check
-        out_bbox = out_bbox[0].detach().numpy()
+        out_bbox = out_bbox[0].detach().cpu().numpy()
 
         cls = ""
         if out_cls == "0":
@@ -444,4 +453,4 @@ def model_inference(path):
     cv2.destroyAllWindows()
 
 run_model()
-#model_inference("run2/00.pth")
+#model_inference("05.pth")
