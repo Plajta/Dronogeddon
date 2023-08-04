@@ -10,6 +10,8 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
+batch_size = 16
+
 def ImgTransform(img, justconvert):
     #convert to size 640x480
     R = img[0, :, :].detach().cpu().numpy()
@@ -132,9 +134,9 @@ train_data = DoorsDataset("train")
 test_data = DoorsDataset("test")
 valid_data = DoorsDataset("valid")
 
-train = DataLoader(train_data, batch_size=32, shuffle=True)
-test = DataLoader(test_data, batch_size=32, shuffle=True)
-validation = DataLoader(valid_data, batch_size=32, shuffle=True)
+train = DataLoader(train_data, batch_size=batch_size, shuffle=True)
+test = DataLoader(test_data, batch_size=batch_size, shuffle=True)
+validation = DataLoader(valid_data, batch_size=batch_size, shuffle=True)
 
 
 #for i in range(500):

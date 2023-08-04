@@ -3,7 +3,7 @@
 #2) add logs to wandb - done
 #3) optimize
 
-from read_dataset import train, test, validation
+from read_dataset import train, test, validation, batch_size
 
 from torchvision.models import resnet18, ResNet18_Weights #fasterrcnn_resnet50_fpn_v2, FasterRCNN_ResNet50_FPN_V2_Weights
 import torchinfo
@@ -17,10 +17,17 @@ import torch
 
 import cv2
 import numpy as np
+import gc
 
-device = "CPU"
+DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 LOG_FREQ = 5
-BATCH = 32
+BATCH = batch_size
+
+print(DEVICE)
+
+#free allocated cuda memory
+torch.cuda.empty_cache()
+gc.collect()
 
 class DoorFC(nn.Module):
     def __init__(self, in_features):
@@ -46,19 +53,19 @@ class DoorCNN(nn.Module): #my own implementation :>
         #convolutional
         self.conv1 = nn.Conv2d(3, 32, (3, 3))
         self.pool1 = nn.AvgPool2d(2)
-        self.b_norm1 = nn.BatchNorm2d(32)
+        self.b_norm1 = nn.BatchNorm2d(BATCH)
 
         self.conv2 = nn.Conv2d(32, 128, (3, 3))
         self.pool2 = nn.AvgPool2d(2)
-        self.b_norm2 = nn.BatchNorm2d(32)
+        self.b_norm2 = nn.BatchNorm2d(BATCH)
 
         self.conv3 = nn.Conv2d(128, 128, (3, 3))
         self.pool3 = nn.AvgPool2d(2)
-        self.b_norm3 = nn.BatchNorm2d(32)
+        self.b_norm3 = nn.BatchNorm2d(BATCH)
 
         self.conv4 = nn.Conv2d(128, 32, (3, 3))
         self.pool4 = nn.MaxPool2d(2)
-        self.b_norm4 = nn.BatchNorm2d(32)
+        self.b_norm4 = nn.BatchNorm2d(BATCH)
 
         self.flatten = nn.Flatten()
 
@@ -179,13 +186,19 @@ class DoorCNN(nn.Module): #my own implementation :>
 
         self.train()
         for X, y in train:
+            X = X.to(DEVICE)
+
+            self.optimizer.zero_grad()
             output_cls, output_bbox = self(X)
 
-            target_cls = torch.tensor(list(map(int, y[0])))
+            output_bbox.to(DEVICE)
+            output_cls.to(DEVICE)
+
+            target_cls = torch.tensor(list(map(int, y[0]))).to(DEVICE)
             target_bbox = y[1:5]
             target_bbox = [[float(element) for element in row] for row in target_bbox]
 
-            target_bbox = torch.tensor(target_bbox)
+            target_bbox = torch.tensor(target_bbox).to(DEVICE)
 
             target_bbox = target_bbox.transpose(0, 1) #TODO: check if correct
 
@@ -198,7 +211,6 @@ class DoorCNN(nn.Module): #my own implementation :>
             loss = loss_cls + loss_bbox
             loss = loss / BATCH
 
-            self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
 
@@ -220,13 +232,18 @@ class DoorCNN(nn.Module): #my own implementation :>
         total_loss = 0
 
         for X, y in test:
+            X = X.to(DEVICE)
+
             output_cls, output_bbox = self(X)
 
-            target_cls = torch.tensor(list(map(int, y[0])))
+            output_cls.to(DEVICE)
+            output_bbox.to(DEVICE)
+
+            target_cls = torch.tensor(list(map(int, y[0]))).to(DEVICE)
             target_bbox = y[1:5]
             target_bbox = [[float(element) for element in row] for row in target_bbox]
 
-            target_bbox = torch.tensor(target_bbox)
+            target_bbox = torch.tensor(target_bbox).to(DEVICE)
 
             target_bbox = target_bbox.transpose(0, 1) #TODO: check if correct
 
@@ -253,11 +270,13 @@ class DoorCNN(nn.Module): #my own implementation :>
 
     def run(self, train_loader, test_loader, valid_loader):
 
-        self.optimizer = optim.SGD(self.parameters(), lr=0.001, momentum=0.9)
-        self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=7, gamma=0.1)
+        self.optimizer = optim.Adam(self.parameters(), lr=0.01)
+        #self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=7, gamma=0.1)
 
         #get info
         torchinfo.summary(self, (1, 3, 640, 480))
+
+        self.to(DEVICE)
 
         Wandb.Init("DOOR-RCNN", self.config, "DOOR-CNN run:" + str(self.model_iter))
         
@@ -371,7 +390,7 @@ def run_model():
     #DoorModel = DoorRCNN()
     #DoorModel.run(train, test, validation)
 
-    MyDoorModel = DoorCNN()
+    MyDoorModel = DoorCNN().to(DEVICE)
     MyDoorModel.run(train, test, validation)
 
 def model_inference(path):
