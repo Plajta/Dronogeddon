@@ -1,6 +1,8 @@
 from torch.utils.data import Dataset
 from torchvision.io import read_image
 from torch.utils.data import DataLoader
+from torch.nn.functional import one_hot
+import torch
 
 import os
 import torchvision.transforms as transforms
@@ -72,32 +74,11 @@ class DoorsDataset(Dataset):
         X = ImgTransform(img, False)
         y = file_data.split(" ") #y - labels
 
+        cls = one_hot(torch.tensor(int(y[0])), num_classes=3)
+        bbox = torch.tensor([float(x) for x in y[1:5]])
+        y = torch.cat((cls, bbox))
+
         return X, y
-
-    def read_data(self, path_label, path_img):
-        output_labels = []
-        output_images = []
-
-        for filename in os.listdir(path_label):
-
-            #read label
-            label_path = os.path.join(path_label, filename)
-            file = open(label_path, "r")
-            file_data = file.readline()
-
-            data = file_data.split(" ")
-            output_labels.append(data)
-
-            file.close()
-
-            #read image
-            img_path = os.path.join(path_img, filename.replace(".txt", ".jpg"))
-            img = read_image(img_path)
-            tensor_resized = ImgTransform(img, False)
-
-            output_images.append(tensor_resized)
-
-        return output_labels, output_images
     
 def inspect_dataset(index, dataloader):
     img = dataloader.dataset[index][0]
@@ -105,18 +86,18 @@ def inspect_dataset(index, dataloader):
 
     img_np = ImgTransform(img, True)
 
-    cls = label[0]
-    if cls == "0":
+    idx = torch.where(label[0:3] == 1.0000)
+    if idx[0][0] == 0:
         cls = "closed"
-    elif cls == "1":
+    elif idx[0][0] == 1:
         cls = "half open"
     else: #cls == "2"
         cls = "fully open"
 
-    x_center = round(float(label[1]) * img_np.shape[1])
-    y_center = round(float(label[2]) * img_np.shape[0])
-    width = round(float(label[3]) * img_np.shape[1])
-    height = round(float(label[4]) * img_np.shape[0])
+    x_center = round(float(label[3]) * img_np.shape[1])
+    y_center = round(float(label[4]) * img_np.shape[0])
+    width = round(float(label[5]) * img_np.shape[1])
+    height = round(float(label[6]) * img_np.shape[0])
 
     start_x = x_center - round(width / 2)
     start_y = y_center - round(height / 2)
@@ -139,5 +120,5 @@ test = DataLoader(test_data, batch_size=batch_size, shuffle=True)
 validation = DataLoader(valid_data, batch_size=batch_size, shuffle=True)
 
 
-#for i in range(500):
-#    inspect_dataset(i, train)
+for i in range(500):
+    inspect_dataset(i, train)

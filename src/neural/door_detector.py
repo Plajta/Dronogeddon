@@ -90,7 +90,7 @@ class DoorCNN(nn.Module): #my own implementation :>
         self.drop5 = nn.Dropout(0.5)
         self.b_norm_l5 = nn.BatchNorm1d(16)
 
-        self.linear_fin = nn.Linear(16, 1)
+        self.linear_fin = nn.Linear(16, 3)
 
         #fully connected - bbox prediction
         self.linear1_bbox = nn.Linear(34048, 512)
@@ -310,8 +310,7 @@ class DoorCNN(nn.Module): #my own implementation :>
             print("train loss:", train_loss)
             print("test loss:", test_loss, "test acc:", test_acc)
 
-            torch.save(self, os.getcwd() + "/src/neural/saved_models/" + str(self.model_iter) + str(epoch) + ".pth")
-            
+            torch.save(self, os.getcwd() + "/src/neural/saved_models/" + str(self.model_iter) + str(epoch) + ".pth")     
 
         self.model_iter += 1
         Wandb.End()
