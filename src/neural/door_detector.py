@@ -176,16 +176,14 @@ class DoorCNN(nn.Module): #my own implementation :>
             output_bbox.to(DEVICE)
             output_cls.to(DEVICE)
 
-            target_cls = torch.tensor(list(map(int, y[0]))).to(DEVICE)
-            target_bbox = y[1:5]
-            target_bbox = [[float(element) for element in row] for row in target_bbox]
+            print(output_bbox)
+            print(output_cls)
 
-            target_bbox = torch.tensor(target_bbox).to(DEVICE)
+            output_cls.to(DEVICE)
+            output_bbox.to(DEVICE)
 
-            target_bbox = target_bbox.transpose(0, 1) #TODO: check if correct
-
-            output_cls = torch.squeeze(output_cls)
-            target_cls = target_cls.to(torch.float32)
+            target_cls = y[:, 0:3].to(DEVICE)
+            target_bbox = y[:, 3:7].to(DEVICE)
 
             loss_cls = F.cross_entropy(output_cls, target_cls)
             loss_bbox = F.smooth_l1_loss(output_bbox, target_bbox) * 100 #scaling by 100 #TODO: check if correct
@@ -198,6 +196,10 @@ class DoorCNN(nn.Module): #my own implementation :>
 
             idx += 1
             total_loss += loss.detach().item()
+
+            for i, elem in enumerate(output_cls):
+                if torch.equal(elem, target_cls[i]):
+                    correct += 1
             
             if idx % LOG_FREQ == 0:
                 print("train loss: " + str(loss.item()))
@@ -223,16 +225,8 @@ class DoorCNN(nn.Module): #my own implementation :>
             output_cls.to(DEVICE)
             output_bbox.to(DEVICE)
 
-            target_cls = torch.tensor(list(map(int, y[0]))).to(DEVICE)
-            target_bbox = y[1:5]
-            target_bbox = [[float(element) for element in row] for row in target_bbox]
-
-            target_bbox = torch.tensor(target_bbox).to(DEVICE)
-
-            target_bbox = target_bbox.transpose(0, 1) #TODO: check if correct
-
-            output_cls = torch.squeeze(output_cls)
-            target_cls = target_cls.to(torch.float32)
+            target_cls = y[:, 0:3].to(DEVICE)
+            target_bbox = y[:, 3:7].to(DEVICE)
 
             loss_cls = F.cross_entropy(output_cls, target_cls)
             loss_bbox = F.smooth_l1_loss(output_bbox, target_bbox) * 100 #scaling by 100 #TODO: check if correct
@@ -243,7 +237,7 @@ class DoorCNN(nn.Module): #my own implementation :>
             total_loss += loss.detach().item()
 
             for i, elem in enumerate(output_cls):
-                if elem == target_cls[i]:
+                if torch.equal(elem, target_cls[i]):
                     correct += 1
 
             idx += 1
