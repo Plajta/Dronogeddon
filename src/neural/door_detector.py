@@ -44,10 +44,9 @@ class DoorCNN(nn.Module): #my own implementation :>
         super(DoorCNN, self).__init__()
         self.model_iter = 0
         self.config = {
-            "epochs": 50,
+            "epochs": 20,
             "optimizer": "adam",
-            "metric": "accuracy",
-            "log_freq": 100
+            "metric": "accuracy"
         }
 
         #convolutional
@@ -176,9 +175,6 @@ class DoorCNN(nn.Module): #my own implementation :>
             output_bbox.to(DEVICE)
             output_cls.to(DEVICE)
 
-            print(output_bbox)
-            print(output_cls)
-
             output_cls.to(DEVICE)
             output_bbox.to(DEVICE)
 
@@ -189,7 +185,6 @@ class DoorCNN(nn.Module): #my own implementation :>
             loss_bbox = F.smooth_l1_loss(output_bbox, target_bbox) * 100 #scaling by 100 #TODO: check if correct
 
             loss = loss_cls + loss_bbox
-            loss = loss / BATCH
 
             loss.backward()
             self.optimizer.step()
@@ -232,7 +227,6 @@ class DoorCNN(nn.Module): #my own implementation :>
             loss_bbox = F.smooth_l1_loss(output_bbox, target_bbox) * 100 #scaling by 100 #TODO: check if correct
 
             loss = loss_cls + loss_bbox
-            loss = loss / BATCH
 
             total_loss += loss.detach().item()
 
@@ -259,9 +253,6 @@ class DoorCNN(nn.Module): #my own implementation :>
         torchinfo.summary(self, (1, 3, 640, 480))
 
         self.to(DEVICE)
-
-        #test
-        init_loss, init_acc = self.test_net(test_loader)
 
         Wandb.Init("DOOR-RCNN", self.config, "DOOR-CNN run:" + str(self.model_iter))
         
@@ -315,8 +306,6 @@ class DoorRCNN:
             self.optimizer.zero_grad()
             output_bbox, output_class = self.model(data)
             loss = nn.NLLLoss()
-
-            print(target)
 
 
     def test_net(self, test):
@@ -389,16 +378,17 @@ def model_inference(path):
         transposed_array = frame.transpose((2, 1, 0))
         tensor = torch.tensor(transposed_array).unsqueeze(0).to(torch.float32).to(DEVICE)
         out = model(tensor)
+
         out_cls = out[0]
         out_bbox = out[1]
 
-        out_cls = round(out_cls[0][0].item()) - 1 #TODO: check
+        idx = torch.where(out_cls == 1.0000)
         out_bbox = out_bbox[0].detach().cpu().numpy()
 
         cls = ""
-        if out_cls == "0":
+        if idx == 0:
             cls = "closed"
-        elif out_cls == "1":
+        elif idx == 0:
             cls = "half open"
         else: #cls == "2"
             cls = "fully open"
@@ -427,5 +417,5 @@ def model_inference(path):
     vid.release()
     cv2.destroyAllWindows()
 
-run_model()
-#model_inference("05.pth")
+#run_model()
+model_inference("02.pth")
