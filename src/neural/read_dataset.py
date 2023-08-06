@@ -120,5 +120,5 @@ test = DataLoader(test_data, batch_size=batch_size, shuffle=True)
 validation = DataLoader(valid_data, batch_size=batch_size, shuffle=True)
 
 
-for i in range(500):
-    inspect_dataset(i, train)
+#for i in range(500):
+#    inspect_dataset(i, train)

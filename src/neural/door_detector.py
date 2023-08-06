@@ -59,51 +59,45 @@ class DoorCNN(nn.Module): #my own implementation :>
         self.pool2 = nn.AvgPool2d(2)
         self.b_norm2 = nn.BatchNorm2d(BATCH)
 
-        self.conv3 = nn.Conv2d(128, 128, (3, 3))
+        self.conv3 = nn.Conv2d(128, 256, (3, 3))
         self.pool3 = nn.AvgPool2d(2)
         self.b_norm3 = nn.BatchNorm2d(BATCH)
 
-        self.conv4 = nn.Conv2d(128, 32, (3, 3))
+        self.conv4 = nn.Conv2d(256, 512, (3, 3))
         self.pool4 = nn.MaxPool2d(2)
         self.b_norm4 = nn.BatchNorm2d(BATCH)
+
+        self.conv5 = nn.Conv2d(512, 256, (3, 3))
+        self.pool5 = nn.MaxPool2d(2)
+        self.b_norm5 = nn.BatchNorm2d(BATCH)
+
+        self.conv6 = nn.Conv2d(256, 64, (3, 3))
+        self.pool6 =nn.MaxPool2d(2)
+        self.b_norm6 = nn.BatchNorm2d(BATCH)
 
         self.flatten = nn.Flatten()
 
         #fully connected - classification
-        self.linear1 = nn.Linear(34048, 1024)
+        self.linear1 = nn.Linear(2560, 512)
         self.drop1 = nn.Dropout(0.5)
-        self.b_norm_l1 = nn.BatchNorm1d(1024)
+        self.b_norm_l1 = nn.BatchNorm1d(512)
 
-        self.linear2 = nn.Linear(1024, 1024)
+        self.linear2 = nn.Linear(512, 64)
         self.drop2 = nn.Dropout(0.5)
-        self.b_norm_l2 = nn.BatchNorm1d(1024)
+        self.b_norm_l2 = nn.BatchNorm1d(64)
 
-        self.linear3 = nn.Linear(1024, 512)
+        self.linear3 = nn.Linear(64, 16)
         self.drop3 = nn.Dropout(0.5)
-        self.b_norm_l3 = nn.BatchNorm1d(512)
-
-        self.linear4 = nn.Linear(512, 64)
-        self.drop4 = nn.Dropout(0.5)
-        self.b_norm_l4 = nn.BatchNorm1d(64)
-
-        self.linear5 = nn.Linear(64, 16)
-        self.drop5 = nn.Dropout(0.5)
-        self.b_norm_l5 = nn.BatchNorm1d(16)
+        self.b_norm_l3 = nn.BatchNorm1d(16)
 
         self.linear_fin = nn.Linear(16, 3)
 
         #fully connected - bbox prediction
-        self.linear1_bbox = nn.Linear(34048, 512)
+        self.linear1_bbox = nn.Linear(2560, 512)
         self.b_norm_bbox_l1 = nn.BatchNorm1d(512)
 
-        self.linear2_bbox = nn.Linear(512, 128)
-        self.b_norm_bbox_l2 = nn.BatchNorm1d(128)
-        
-        self.linear3_bbox = nn.Linear(128, 64)
-        self.b_norm_bbox_l3 = nn.BatchNorm1d(64)
-
-        self.linear4_bbox = nn.Linear(64, 16)
-        self.b_norm_bbox_l4 = nn.BatchNorm1d(16)
+        self.linear2_bbox = nn.Linear(512, 16)
+        self.b_norm_bbox_l2 = nn.BatchNorm1d(16)
 
         self.linear_bbox_fin = nn.Linear(16, 4)
 
@@ -112,22 +106,26 @@ class DoorCNN(nn.Module): #my own implementation :>
         x = self.conv1(x)
         x = self.pool1(x)
         x = F.relu(x)
-        x = self.drop1(x)
 
         x = self.conv2(x)
         x = self.pool2(x)
         x = F.relu(x)
-        x = self.drop2(x)
 
         x = self.conv3(x)
         x = self.pool3(x)
         x = F.relu(x)
-        x = self.drop3(x)
 
         x = self.conv4(x)
         x = self.pool4(x)
         x = F.relu(x)
-        x = self.drop4(x)
+
+        x = self.conv5(x)
+        x = self.pool5(x)
+        x = F.relu(x)
+
+        x = self.conv6(x)
+        x = self.pool6(x)
+        x = F.relu(x)
 
         x = self.flatten(x)
 
@@ -150,16 +148,6 @@ class DoorCNN(nn.Module): #my own implementation :>
         x = F.relu(x)
         x = self.b_norm_l3(x)
 
-        x = self.linear4(x)
-        x = self.drop4(x)
-        x = F.relu(x)
-        x = self.b_norm_l4(x)
-
-        x = self.linear5(x)
-        x = self.drop5(x)
-        x = F.relu(x)
-        x = self.b_norm_l5(x)
-
         pred_cls = self.linear_fin(x)
 
         #fully connected - bbox prediction
@@ -167,12 +155,6 @@ class DoorCNN(nn.Module): #my own implementation :>
 
         x_bbox = self.linear2_bbox(x_bbox)
         x_bbox = self.b_norm_bbox_l2(x_bbox)
-
-        x_bbox = self.linear3_bbox(x_bbox)
-        x_bbox = self.b_norm_bbox_l3(x_bbox)
-
-        x_bbox = self.linear4_bbox(x_bbox)
-        x_bbox = self.b_norm_bbox_l4(x_bbox)
 
         x_bbox = self.linear_bbox_fin(x_bbox)
 
