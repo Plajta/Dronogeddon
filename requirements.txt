@@ -5,3 +5,7 @@ numpy
 matplotlib
 pyyaml
 customtkinter
+torchvision
+torch
+
+#NOTE: dont use this on conda builds!

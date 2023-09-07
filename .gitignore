@@ -1,6 +1,32 @@
-imgs
-video.avi
+
+human-detection-dataset 
+#Installed some simple unannotated dataset from: https://www.kaggle.com/datasets/constantinwerner/human-detection-dataset?resource=download
+#I will use a small portion of it on testing
+
 /src/__pycache__/
+/src/Detection/__pycache__/
+/src/Detection/dataset/annotations*
+
+/src/tests/
+/src/Flight_logs/video/
+/src/Flight_logs/txt/
+
+/src/neural/__pycache__
+.vscode
+
 mp_env
 secret.yml
 sender.yml
+
+#door detector
+/src/neural/dataset/test
+/src/neural/dataset/train
+/src/neural/dataset/valid
+
+#saved models directory
+!/src/neural/saved_models/.gitkeep
+/src/neural/saved_models/*
+
+#temp files
+/src/neural/__pycache__
+/wandb/
