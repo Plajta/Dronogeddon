@@ -6,8 +6,8 @@ from djitellopy import Tello
 import ToF as tf
 import time
 from threading import Thread
+import threading
 from queue import Queue
-
 from neural.pretrained import model, convert_to_tensor, process_data, compute_dev, SCREEN_CENTER
 
 side_margin_low = 800
@@ -20,9 +20,9 @@ log_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.gmtime())
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 pokracovac = True
-zastavovac = False
+zastavovac = threading.Event()
 
-
+video_out = None
 
 mean = [[],[],[]]
 def distancemeter():
@@ -62,89 +62,156 @@ def Convert_to_Instructions(y_deviation, x_deviation, ob_area):
     return [in2, in1]
 
 def stop_drone():
+    print("stop")
     tello.land()
-    zastavovac = True
+    zastavovac.set()
+    print(f"zastavovac {zastavovac}")
     video_out.release()
-    tello.streamoff()
-    log_pad.close()
+    print("video relesed")
     instructor.join()
+    print("join")
+    AImeter.join()
+    print("join")
+    ToFmeter.join()
+    print("join")
+    tello.streamoff()
+    print("stream off")
+    log_pad.close()
+    print("logpad ")
     exit(1)
 
-def videoRecorder():
-    image = frame_read.frame
+def video_recording():
+    frame_read = tello.get_frame_read()
+    height, width, _ = frame_read.frame.shape
+    video_out = cv2.VideoWriter(f'src/Flight_logs/video/flight_log_{log_time}.mkv', cv2.VideoWriter_fourcc(*'XVID'), 30, (width, height))
+    data = tf.mesurments()
+    while not zastavovac.is_set():
 
-    data = distancemeter()
+        img_out = frame_read.frame
 
-    """
-    CAMERA  
-    """
+        if instructions_ToF.empty() == False :
+            data = instructions_ToF.get()[2]
+
+        cv2.putText(img_out, 
+                    f"{round(time.time()-start_time, 2)}s", 
+                    (10, 20), 
+                    font, 1/2, 
+                    (0, 255, 255),
+                    2,
+                    cv2.LINE_4) 
+        
+        cv2.putText(img_out, 
+                    f"{log_time}", 
+                    (770, 20), 
+                    font, 1/2, 
+                    (0, 255, 255), 
+                    2, 
+                    cv2.LINE_4) 
+        
+        cv2.putText(img_out, 
+                f"left: {data[1]} front: {data[0]} right: {data[2]}", 
+                (10, 700), 
+                font, 1/2, 
+                (0, 255, 255), 
+                2, 
+                cv2.LINE_4) 
+                
+        video_out.write(img_out)
+        pictures.queue.clear()
+        pictures.put(img_out)
+        
+        time.sleep(1 / 30)
+
+        cv2.imshow("output_drone", img_out)
+        if cv2.waitKey(1) == ord('q'):
+            stop_drone()
+
+
+def AI():
+    while not zastavovac.is_set():
+        print("AI běží")
+        """
+        AI
+        """
+        if pictures.empty() == False :
+
+            image = pictures.get()
+
+
+
+            torch_tensor = convert_to_tensor(image)
+
+            output = model(torch_tensor)
+            result = process_data(output, image)
+            if len(result) != 0: #just when the data is avaliable
+                y_dev, x_dev, area = compute_dev(result, image)
+
+                y_dev = round(y_dev / SCREEN_CENTER[0], 2)
+                x_dev = round(x_dev / SCREEN_CENTER[1], 2)
+
+                instruction = Convert_to_Instructions(y_dev, x_dev, area)
+                #print("IN:")
+                #print(instruction)
+                instructions_cam.queue.clear()
+                instructions_cam.put(instruction)
+
     
-    
-    # torch_tensor = convert_to_tensor(image)
-
-    # output = model(torch_tensor)
-    # result = process_data(output, image)
-    # if len(result) != 0: #just when the data is avaliable
-    #     y_dev, x_dev, area = compute_dev(result, image)
-
-    #     y_dev = round(y_dev / SCREEN_CENTER[0], 2)
-    #     x_dev = round(x_dev / SCREEN_CENTER[1], 2)
-
-    #     instruction = Convert_to_Instructions(y_dev, x_dev, area)
-    #     #print("IN:")
-    #     #print(instruction)
-    #     instructions_cam.queue.clear()
-    #     instructions_cam.put(instruction)
-
-    """
-    ToF
-    """
-
-    
-    distance_front = data[3]
-    distance_sideL = data[1]
-    distance_sideR = data[2]
-    speedFront = 0 
-    speedSide = 0
 
 
-    if distance_sideL + distance_sideR < side_margin_high * 2:
-        local_side_margin_high = (distance_sideL + distance_sideR)/2
-        local_side_margin_low = local_side_margin_high - 300
-        log(f"{data} || soucet:{distance_sideL + distance_sideR} True H:{local_side_margin_high} L:{local_side_margin_low}")
-
-    else:
-        local_side_margin_high = side_margin_high
-        local_side_margin_low = side_margin_low
-        log(f"{data} || soucet:{distance_sideL + distance_sideR} False H:{local_side_margin_high} L:{local_side_margin_low}")
-
-    if distance_sideR > side_margin_ignore:
+def ToF():
+    while not zastavovac.is_set():
+        print("tof běží")
+        """
+        ToF
+        """
+        data = distancemeter()
+        
+        distance_front = data[3]
+        distance_sideL = data[1]
+        distance_sideR = data[2]
+        speedFront = 0 
         speedSide = 0
-    elif distance_sideR < local_side_margin_low:
-        speedSide = -20
-
-    elif distance_sideR > local_side_margin_high:
-        speedSide = 20
-
-    else:
-        speedSide = 0
 
 
-    if distance_front > border_front:
-        speedFront = 30
+        if distance_sideL + distance_sideR < side_margin_high * 2:
+            local_side_margin_high = (distance_sideL + distance_sideR)/2
+            local_side_margin_low = local_side_margin_high - 300
+            log(f"{data} || soucet:{distance_sideL + distance_sideR} True H:{local_side_margin_high} L:{local_side_margin_low}")
 
-    else:
-        speedFront = 0
-        tello.rotate_counter_clockwise(90)
+        else:
+            local_side_margin_high = side_margin_high
+            local_side_margin_low = side_margin_low
+            log(f"{data} || soucet:{distance_sideL + distance_sideR} False H:{local_side_margin_high} L:{local_side_margin_low}")
 
-    print([speedSide, speedFront])
-    instructions_ToF.queue.clear()
-    instructions_ToF.put([speedSide, speedFront])
-    #tello.send_rc_control(speedSide,speedFront,0,0)
-    return image
+        if distance_sideR > side_margin_ignore:
+            speedSide = 0
+        elif distance_sideR < local_side_margin_low:
+            speedSide = -20
+
+        elif distance_sideR > local_side_margin_high:
+            speedSide = 20
+
+        else:
+            speedSide = 0
+
+
+        if distance_front > border_front:
+            speedFront = 30
+
+        else:
+            speedFront = 0
+            tello.rotate_counter_clockwise(90)
+
+        print([speedSide, speedFront])
+        instructions_ToF.queue.clear()
+        instructions_ToF.put([speedSide, speedFront,data])
+        #tello.send_rc_control(speedSide,speedFront,0,0)
+
 
 def process_instructions():
-    while zastavovac == False: #i hate this
+    while not zastavovac.is_set(): #i hate this
+        time.sleep(0.5)
+        print("instruktor běží")
         """
         CAMERA
         """
@@ -181,40 +248,26 @@ def log(text="", entr="\n"):
 tello = Tello()
 instructions_cam = Queue()
 instructions_ToF = Queue()
+pictures = Queue()
 
 tello.connect(False)
 tello.streamon()
-frame_read = tello.get_frame_read()
+
 
 instructor = Thread(target=process_instructions)
+ToFmeter = Thread(target=ToF)
+AImeter = Thread(target=AI)
+videoRecorder = Thread(target=video_recording)
 
 
-
+videoRecorder.start()
 
 log("tello takeoff")
 tello.takeoff()
 #tello.move_up(100)
 
-while pokracovac:
-    data = tf.mesurments()
-    distanceFront = data[0]
-    log(data)
-    if distanceFront > border_front:
-        tello.send_rc_control(0,20,0,0)
-    else:
-        tello.send_rc_control(0,0,0,0)
-        pokracovac = False
-
-video_out = cv2.VideoWriter(f'src/Flight_logs/video/flight_log_{log_time}.mkv', cv2.VideoWriter_fourcc(*'XVID'), 30, (480, 640)) #TODO: check if correct
-
-img_out = videoRecorder()
+ToFmeter.start()
+AImeter.start()
 instructor.start()
 
-while True:
-    img_out = videoRecorder()
-    video_out.write(img_out)
-    time.sleep(1 / 30)
 
-    cv2.imshow("output_drone", img_out)
-    if cv2.waitKey(1) == ord('q'):
-        stop_drone()

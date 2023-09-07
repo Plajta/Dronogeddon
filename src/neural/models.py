@@ -10,16 +10,20 @@ import torch.optim as optim
 from torch.optim import lr_scheduler
 import torch
 
+#if i am offline
+import numpy as np
+
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 LOG_FREQ = 5
 BATCH = batch_size
+LOGGING = True
 
 class Universal(nn.Module):
     def __init__(self):
         super(Universal, self).__init__()
         self.model_iter = 0
         self.config = {
-            "epochs": 10,
+            "epochs": 5,
             "optimizer": "adam",
             "metric": "accuracy"
         }
@@ -27,6 +31,7 @@ class Universal(nn.Module):
     def train_net(self, train):
         idx = 0
         total_loss = 0
+        correct = 0
 
         self.train()
         for X, y in train:
@@ -55,12 +60,16 @@ class Universal(nn.Module):
             idx += 1
             total_loss += loss.detach().item()
 
-            pred_cls = output_cls.data.max(1, keepdim=True)
-            correct += pred_cls.eq(target_cls.data.view_as(pred_cls).sum())
+            for i in range(output_cls.shape[0]):
+                output_idx = torch.argmax(output_cls[i])
+                target_idx = torch.argmax(target_cls[i])
+                if output_idx == target_idx:
+                    correct += 1
             
             if idx % LOG_FREQ == 0:
                 print("train loss: " + str(loss.item()))
-                Wandb.wandb.log({"train_loss": loss.item()})
+                if LOGGING:
+                    Wandb.wandb.log({"train_loss": loss.item(), "train_acc": correct / (idx * BATCH)})
                 
             #free the memory
             torch.cuda.empty_cache()
@@ -93,13 +102,16 @@ class Universal(nn.Module):
 
             idx += 1
 
-            pred_cls = output_cls.data.max(1, keepdim=True)
-            correct += pred_cls.eq(target_cls.data.view_as(pred_cls).sum())
-            #TODO: dodělat accuracy (je to napsaný v inferenci)
+            for i in range(output_cls.shape[0]):
+                output_idx = torch.argmax(output_cls[i])
+                target_idx = torch.argmax(target_cls[i])
+                if output_idx == target_idx:
+                    correct += 1
 
             #test set has only 286 images, so i am going to log this every iteration
             print("test loss: " + str(loss.item()), "test acc: " + str(correct / (idx * BATCH)))
-            Wandb.wandb.log({"test_loss": loss.item(), "test_acc": correct / (idx * BATCH)})
+            if LOGGING:
+                Wandb.wandb.log({"test_loss": loss.item(), "test_acc": correct / (idx * BATCH)})
 
             #free the memory
             torch.cuda.empty_cache()
@@ -108,41 +120,57 @@ class Universal(nn.Module):
 
     def run(self, model_name, train_loader, test_loader, valid_loader):
 
+        print(DEVICE)
+        print("Logging set to " + str(LOGGING))
+
         self.optimizer = optim.Adam(self.parameters(), lr=0.001)
         #self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=7, gamma=0.1)
+
+        self.test_net(test_loader)
 
         #get info
         torchinfo.summary(self, (1, 3, 640, 480))
 
         self.to(DEVICE)
 
-        Wandb.Init("DOOR-RCNN", self.config, model_name + " run:" + str(self.model_iter))
+        if LOGGING:
+            Wandb.Init("DOOR-RCNN", self.config, model_name + " run:" + str(self.model_iter))
         
         init_loss, init_acc = self.test_net(test_loader)
         print(init_loss, init_acc)
-        Wandb.wandb.log({"test_acc": init_acc, "test_loss": init_loss})
+        if LOGGING:
+            Wandb.wandb.log({"test_acc": init_acc, "test_loss": init_loss})
         for i, epoch in enumerate(range(self.config["epochs"])):
 
             #train epoch and log
             train_loss = self.train_net(train_loader)
             print(train_loss)
             print("train " + str(i) + " epoch")
-            Wandb.wandb.log({"train_loss": train_loss})
+            if LOGGING:
+                Wandb.wandb.log({"train_loss": train_loss})
 
-            
             #test epoch and log
             test_loss, test_acc = self.test_net(test_loader)
             print(test_loss, test_acc)
             print("test " + str(i) + "epoch")
-            Wandb.wandb.log({"test_acc": test_acc, "test_loss": test_loss})
+            if LOGGING:
+                Wandb.wandb.log({"test_acc": test_acc, "test_loss": test_loss})
 
-            print("train loss:", train_loss)
+            
+            
+            print("train loss:", train_loss, "train acc : TODO")
             print("test loss:", test_loss, "test acc:", test_acc)
 
             torch.save(self, os.getcwd() + "/src/neural/saved_models/" + str(self.model_iter) + str(epoch) + ".pth")     
+            torch.cuda.empty_cache()
 
         self.model_iter += 1
-        Wandb.End()
+        if LOGGING:
+            Wandb.End()
+
+###################
+# DoorCNN
+###################
 
 class DoorCNN(Universal):
     def __init__(self):
@@ -266,34 +294,34 @@ class DoorCNN(Universal):
 
         return pred_cls, pred_bbox
 
+###################
+# MyDoorResNet
+###################
+
+def res_block(in_c):
+    return nn.Sequential(
+        nn.Conv2d(in_c[0], in_c[1], (3, 3)),
+        nn.Conv2d(in_c[1], in_c[2], (3, 3)),
+        nn.MaxPool2d(2),
+        nn.BatchNorm2d(in_c[2])
+    )
+
 class MyDoorResNet(Universal):
     def __init__(self):
         super(MyDoorResNet, self).__init__()
 
         #convolutional
-        self.conv1 = nn.Conv2d(3, 32, (3, 3))
-        self.pool1 = nn.AvgPool2d(2)
-        self.b_norm1 = nn.BatchNorm2d(BATCH)
+        self.block1 = res_block([3, 16, 32])
+        self.pool1 = nn.MaxPool2d(2) #used in skip connection
 
-        self.conv2 = nn.Conv2d(32, 128, (3, 3))
-        self.pool2 = nn.AvgPool2d(2)
-        self.b_norm2 = nn.BatchNorm2d(BATCH)
+        self.block1 = res_block([32, 64, 128])
+        self.pool1 = nn.MaxPool2d(2)
 
-        self.conv3 = nn.Conv2d(128, 256, (3, 3))
-        self.pool3 = nn.AvgPool2d(2)
-        self.b_norm3 = nn.BatchNorm2d(BATCH)
+        self.block1 = res_block([128, 256, 512])
+        self.pool1 = nn.MaxPool2d(2)
 
-        self.conv4 = nn.Conv2d(256, 512, (3, 3))
-        self.pool4 = nn.MaxPool2d(2)
-        self.b_norm4 = nn.BatchNorm2d(BATCH)
-
-        self.conv5 = nn.Conv2d(512, 256, (3, 3))
-        self.pool5 = nn.MaxPool2d(2)
-        self.b_norm5 = nn.BatchNorm2d(BATCH)
-
-        self.conv6 = nn.Conv2d(256, 64, (3, 3))
-        self.pool6 =nn.MaxPool2d(2)
-        self.b_norm6 = nn.BatchNorm2d(BATCH)
+        self.block1 = res_block([512, 1024, 2048])
+        self.pool1 = nn.MaxPool2d(2)
 
         self.flatten = nn.Flatten()
 
@@ -323,29 +351,21 @@ class MyDoorResNet(Universal):
 
     def forward(self, x):
         #convolution
-        x = self.conv1(x)
-        x = self.pool1(x)
-        x = F.relu(x)
+        x_res = self.pool1(x)
+        x = self.block1(x)
+        x = x + x_res
 
-        x = self.conv2(x)
-        x = self.pool2(x)
-        x = F.relu(x)
+        x_res = self.pool2(x)
+        x = self.block2(x)
+        x = x + x_res
 
-        x = self.conv3(x)
-        x = self.pool3(x)
-        x = F.relu(x)
+        x_res = self.pool3(x)
+        x = self.block3(x)
+        x = x + x_res
 
-        x = self.conv4(x)
-        x = self.pool4(x)
-        x = F.relu(x)
-
-        x = self.conv5(x)
-        x = self.pool5(x)
-        x = F.relu(x)
-
-        x = self.conv6(x)
-        x = self.pool6(x)
-        x = F.relu(x)
+        x_res = self.pool4(x)
+        x = self.block4(x)
+        x = x + x_res
 
         x = self.flatten(x)
 
@@ -383,6 +403,35 @@ class MyDoorResNet(Universal):
         return pred_cls, pred_bbox
 
 
+class DoorFC(nn.Module):
+    def __init__(self, in_features):
+        super(DoorFC, self).__init__()
+
+        self.bbox = nn.Sequential(nn.BatchNorm1d(512), nn.Dropout(), nn.Linear(in_features, 4))
+        self.classifier = nn.Sequential(nn.BatchNorm1d(512), nn.Linear(512, 128), nn.ReLU(), nn.Dropout(), nn.Linear(128, 3))
+
+    def forward(self, x):
+        return self.bbox(x), self.classifier(x)
+
+
 class DoorResNet(Universal):
     def __init__(self):
         super(DoorResNet, self).__init__()
+
+        self.weights = ResNet18_Weights.DEFAULT
+        self.model = resnet18(weights=self.weights)
+
+    def set_model_to_trainable(self):
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+        num_features = self.model.fc.in_features
+        FC_append = DoorFC(num_features)
+        self.model.fc = FC_append
+
+        torchinfo.summary(self.model, (1, 3, 640, 480))
+
+    def forward(self, x):
+        pred = self.model(x)
+
+        return pred[0], pred[1]

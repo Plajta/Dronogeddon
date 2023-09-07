@@ -12,7 +12,7 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-batch_size = 16
+batch_size = 8 #i hate cuda-out of memory
 
 def ImgTransform(img, justconvert):
     #convert to size 640x480

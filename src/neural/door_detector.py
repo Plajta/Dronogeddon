@@ -4,7 +4,8 @@
 #3) optimize
 
 from read_dataset import train, test, validation, batch_size
-from models import DoorCNN, DoorResNet, MyDoorResNet
+from models import DoorCNN, DoorResNet, MyDoorResNet, DEVICE
+import models
 
 from torchvision.models import resnet18, ResNet18_Weights #fasterrcnn_resnet50_fpn_v2, FasterRCNN_ResNet50_FPN_V2_Weights
 import torchinfo
@@ -20,11 +21,9 @@ import cv2
 import numpy as np
 import gc
 
-DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 LOG_FREQ = 5
 BATCH = batch_size
 
-print(DEVICE)
 
 #free allocated cuda memory
 torch.cuda.empty_cache()
@@ -40,89 +39,22 @@ class DoorFC(nn.Module):
     def forward(self, x):
         return self.bbox(x), self.classifier(x)
 
-class DoorRCNN(nn.Module):
-    def __init__(self):
-        super(DoorRCNN, self).__init__()
-        self.model_iter = 0
-        self.config = {
-            "epochs": 10,
-            "optimizer": "adam",
-            "metric": "accuracy",
-            "log_freq": 100
-        }
+def run_models(wandb_logging, version):
+    models.LOGGING = wandb_logging
 
-        self.weights = ResNet18_Weights.DEFAULT
-        self.model = resnet18(weights=self.weights)
-
-    def train_net(self, train):
-        self.model.train()
-        correct = 0
-        log_i = 0
-
-        for i, (data, target) in enumerate(train):
-            log_i += 1
-            self.optimizer.zero_grad()
-            output_bbox, output_class = self.model(data)
-            loss = nn.NLLLoss()
-
-
-    def test_net(self, test):
-        pass
-
-    def set_model_to_trainable(self):
-        for param in self.model.parameters():
-            param.requires_grad = False
-
-        num_features = self.model.fc.in_features
-        FC_append = DoorFC(num_features)
-        self.model.fc = FC_append
-
-        torchinfo.summary(self.model, (1, 3, 640, 480))
-
-    def forward(self, x):
-        pred = self.model(x)
-
-        return pred
-    
-    def run(self, train_loader, test_loader, valid_loader):
-        self.set_model_to_trainable()
-
-        self.optimizer = optim.SGD(self.model.fc.parameters(), lr=0.001, momentum=0.9)
-        self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=7, gamma=0.1)
-
-        #test
-        self.train_net(train_loader)
-
-        Wandb.Init("DOOR-RCNN", self.config, "DOOR-RCNN run:" + str(self.model_iter))
-        
-        init_loss, init_acc = self.test_net(test_loader, Wandb.wandb)
-        Wandb.wandb.log({"test_acc": init_acc, "test_loss": init_loss})
-        for i in range(self.config["epochs"]):
-
-            #train epoch and log
-            train_loss, train_acc = self.train_net(train_loader, Wandb.wandb)
-            print("train " + str(i) + "epoch")
-            Wandb.wandb.log({"train_acc": train_acc, "train_loss": train_loss})
-
-            #test epoch and log
-            test_loss, test_acc = self.test_net(test_loader, Wandb.wandb)
-            print("test " + str(i) + "epoch")
-            Wandb.wandb.log({"test_acc": test_acc, "test_loss": test_loss})
-
-            print("train loss:", train_loss, "train acc:", train_acc)
-            print("test loss:", test_loss, "test acc:", test_acc)
-
-            torch.save(self, os.getcwd() + "/src/neural/saved_models/" + str(self.model_iter) + str(i) + ".pth")
-
-        self.model_iter += 1
-        Wandb.End()
-
-def run_models():
     #DoorModel = DoorRCNN()
     #DoorModel.run(train, test, validation)
 
-    MyDoorModel = DoorCNN().to(DEVICE)
-    MyDoorModel.run("DOOR-CNN", train, test, validation)
+    if version == 0:
+        MyDoorModel = DoorCNN().to(DEVICE)
+        MyDoorModel.run("DOOR-CNN", train, test, validation)
+    elif version == 1:
+        MyDoorModel = MyDoorResNet().to(DEVICE)
+        MyDoorModel.run("DOOR-MyResNet", train, test, validation)
+    else:
+        MyDoorModel = DoorResNet().to(DEVICE)
+        MyDoorModel.set_model_to_trainable()
+        MyDoorModel.run("DOOR-ResNet", train, test, validation)
 
 def model_inference(path):
     #inference on notebook camera
@@ -175,5 +107,5 @@ def model_inference(path):
     vid.release()
     cv2.destroyAllWindows()
 
-run_models()
+run_models(True, 2)
 #model_inference("04.pth")
