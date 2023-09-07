@@ -197,13 +197,16 @@ void setup()
       Serial.println(i);
       while (1);
     }
+    
 
     // Each sensor must have its address changed to a unique value other than
     // the default of 0x29 (except for the last one, which could be left at
     // the default). To make it simple, we'll just count up from 0x2A.
     sensors[i].setAddress(0x2A + i);
 
-    sensors[i].startContinuous(50);
+    sensors[i].setDistanceMode(VL53L1X::Medium);
+    sensors[i].setMeasurementTimingBudget(33000);
+    sensors[i].startContinuous(33);
   }
     pinMode(34, INPUT_PULLUP);
     if (digitalRead(34) == 0)
@@ -226,11 +229,11 @@ void setup()
 
     RMTT_RGB::Init();
     RMTT_RGB::SetRGB(255, 0, 0);
-    delay(2000);
+    delay(1000);
     RMTT_RGB::SetRGB(0, 255, 0);
-    delay(2000);
+    delay(1000);
     RMTT_RGB::SetRGB(0, 0, 255);
-    delay(2000);
+    delay(1000);
     RMTT_RGB::SetRGB(0, 0, 0);
     //p_tt_gamesir = RMTT_GamesirT1d::GetInstance();
     Serial.println("1");
