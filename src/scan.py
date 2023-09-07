@@ -18,7 +18,7 @@ data = []
 
 start = tello.get_yaw()
 tello.send_rc_control(0,0,0,10)
-while 1 == 1:
+while True:
     deg = tello.get_yaw()
     dis = tf.mesurments()
     print(f"stupně: {deg[0]} vzdálenost {dis}")
