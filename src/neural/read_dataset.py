@@ -111,8 +111,17 @@ def inspect_dataset(index, dataloader):
     cv2.imshow("test", img_np)
     cv2.waitKey(0)
 
-train_data = DoorsDataset("train")
-test_data = DoorsDataset("test")
+class TestDoorsData(Dataset):
+    pass
+
+#standart case
+#train_data = DoorsDataset("train")
+#test_data = DoorsDataset("test")
+#valid_data = DoorsDataset("valid")
+
+#to train on better data
+train_data = DoorsDataset("test")
+test_data = DoorsDataset("valid")
 valid_data = DoorsDataset("valid")
 
 train = DataLoader(train_data, batch_size=batch_size, shuffle=True)

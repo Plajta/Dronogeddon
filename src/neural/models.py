@@ -38,7 +38,7 @@ class Universal(nn.Module):
             X = X.to(DEVICE)
 
             self.optimizer.zero_grad()
-            output_cls, output_bbox = self(X)
+            output_bbox, output_cls = self(X)
 
             output_bbox.to(DEVICE)
             output_cls.to(DEVICE)
@@ -85,7 +85,7 @@ class Universal(nn.Module):
         for X, y in test:
             X = X.to(DEVICE)
 
-            output_cls, output_bbox = self(X)
+            output_bbox, output_cls = self(X)
 
             output_cls.to(DEVICE)
             output_bbox.to(DEVICE)
@@ -125,8 +125,6 @@ class Universal(nn.Module):
 
         self.optimizer = optim.Adam(self.parameters(), lr=0.001)
         #self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=7, gamma=0.1)
-
-        self.test_net(test_loader)
 
         #get info
         torchinfo.summary(self, (1, 3, 640, 480))
@@ -400,7 +398,7 @@ class MyDoorResNet(Universal):
 
         pred_bbox = F.sigmoid(x_bbox)
 
-        return pred_cls, pred_bbox
+        return pred_bbox, pred_cls
 
 
 class DoorFC(nn.Module):
@@ -433,5 +431,5 @@ class DoorResNet(Universal):
 
     def forward(self, x):
         pred = self.model(x)
-
+        
         return pred[0], pred[1]

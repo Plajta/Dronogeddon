@@ -42,9 +42,6 @@ class DoorFC(nn.Module):
 def run_models(wandb_logging, version):
     models.LOGGING = wandb_logging
 
-    #DoorModel = DoorRCNN()
-    #DoorModel.run(train, test, validation)
-
     if version == 0:
         MyDoorModel = DoorCNN().to(DEVICE)
         MyDoorModel.run("DOOR-CNN", train, test, validation)
@@ -69,8 +66,8 @@ def model_inference(path):
         tensor = torch.tensor(transposed_array).unsqueeze(0).to(torch.float32).to(DEVICE)
         out = model(tensor)
 
-        out_cls = out[0]
-        out_bbox = out[1]
+        out_bbox = out[0]
+        out_cls = out[1]
 
         idx = torch.argmax(out_cls)
         out_bbox = out_bbox[0].detach().cpu().numpy()
@@ -107,5 +104,5 @@ def model_inference(path):
     vid.release()
     cv2.destroyAllWindows()
 
-run_models(True, 2)
-#model_inference("04.pth")
+#run_models(True, 2)
+model_inference("04.pth")
