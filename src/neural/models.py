@@ -23,7 +23,7 @@ class Universal(nn.Module):
         super(Universal, self).__init__()
         self.model_iter = 0
         self.config = {
-            "epochs": 5,
+            "epochs": 15,
             "optimizer": "adam",
             "metric": "accuracy"
         }
@@ -70,6 +70,9 @@ class Universal(nn.Module):
                 print("train loss: " + str(loss.item()))
                 if LOGGING:
                     Wandb.wandb.log({"train_loss": loss.item(), "train_acc": correct / (idx * BATCH)})
+
+                    #logging losses separately
+                    Wandb.wandb.log({"train_loss_bbox": loss_bbox.item(), "train_loss_cls": loss_cls.item()})
                 
             #free the memory
             torch.cuda.empty_cache()
@@ -112,6 +115,9 @@ class Universal(nn.Module):
             print("test loss: " + str(loss.item()), "test acc: " + str(correct / (idx * BATCH)))
             if LOGGING:
                 Wandb.wandb.log({"test_loss": loss.item(), "test_acc": correct / (idx * BATCH)})
+
+                #logging losses separately
+                Wandb.wandb.log({"test_loss_bbox": loss_bbox.item(), "test_loss_cls": loss_cls.item()})
 
             #free the memory
             torch.cuda.empty_cache()
@@ -405,8 +411,8 @@ class DoorFC(nn.Module):
     def __init__(self, in_features):
         super(DoorFC, self).__init__()
 
-        self.bbox = nn.Sequential(nn.BatchNorm1d(512), nn.Dropout(), nn.Linear(in_features, 4))
-        self.classifier = nn.Sequential(nn.BatchNorm1d(512), nn.Linear(512, 128), nn.ReLU(), nn.Dropout(), nn.Linear(128, 3))
+        self.bbox = nn.Sequential(nn.Linear(in_features, 4), nn.Sigmoid())
+        self.classifier = nn.Sequential(nn.Linear(512, 3))
 
     def forward(self, x):
         return self.bbox(x), self.classifier(x)
@@ -420,8 +426,8 @@ class DoorResNet(Universal):
         self.model = resnet18(weights=self.weights)
 
     def set_model_to_trainable(self):
-        for param in self.model.parameters():
-            param.requires_grad = False
+        #for param in self.model.parameters():
+        #    param.requires_grad = False
 
         num_features = self.model.fc.in_features
         FC_append = DoorFC(num_features)
@@ -431,5 +437,5 @@ class DoorResNet(Universal):
 
     def forward(self, x):
         pred = self.model(x)
-        
+
         return pred[0], pred[1]

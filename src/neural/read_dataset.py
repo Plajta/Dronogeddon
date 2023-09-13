@@ -80,6 +80,56 @@ class DoorsDataset(Dataset):
 
         return X, y
     
+class TestDoorsData(Dataset):
+    def __init__(self, type):
+        self.dataset_path = os.getcwd() + "/src/neural/dataset/"
+
+        if type == "test":
+            self.dataset_path += "test/"
+        elif type == "valid":
+            self.dataset_path += "valid/"
+        else:
+            self.dataset_path += "train/"
+
+        self.path_labels = self.dataset_path + "labels/"
+        self.path_imgs = self.dataset_path + "images"
+
+        #self.img_labels, self.images = self.read_data(dataset_path + "labels/", dataset_path + "images/")
+
+    def __len__(self):
+        return len(os.listdir(self.path_labels))
+    
+    def __getitem__(self, index):
+
+        
+
+        arr_labels = os.listdir(self.path_labels)
+        arr_images = os.listdir(self.path_imgs)
+
+        label_path = os.path.join(self.path_labels, arr_labels[index])
+        file = open(label_path, "r")
+        file_data = file.readline()
+        file.close()
+
+        index_img = 0
+
+        identify = label_path.replace(self.dataset_path + "labels/", "").replace(".txt", "")
+        for i, image_path in enumerate(arr_images):
+            if identify in image_path:
+                index_img = i
+
+        img_path = os.path.join(self.path_imgs, arr_images[index_img].replace(".txt", "jpg"))
+        img = read_image(img_path)
+
+        X = ImgTransform(img, False)
+        y = file_data.split(" ") #y - labels
+
+        cls = one_hot(torch.tensor(int(y[0])), num_classes=3)
+        bbox = torch.tensor([float(x) for x in y[1:5]])
+        y = torch.cat((cls, bbox))
+
+        return X, y
+    
 def inspect_dataset(index, dataloader):
     img = dataloader.dataset[index][0]
     label = dataloader.dataset[index][1]
@@ -110,9 +160,6 @@ def inspect_dataset(index, dataloader):
 
     cv2.imshow("test", img_np)
     cv2.waitKey(0)
-
-class TestDoorsData(Dataset):
-    pass
 
 #standart case
 #train_data = DoorsDataset("train")
