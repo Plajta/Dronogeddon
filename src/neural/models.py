@@ -411,8 +411,8 @@ class DoorFC(nn.Module):
     def __init__(self, in_features):
         super(DoorFC, self).__init__()
 
-        self.bbox = nn.Sequential(nn.BatchNorm1d(512), nn.Dropout(), nn.Linear(in_features, 4), nn.Sigmoid())
-        self.classifier = nn.Sequential(nn.BatchNorm1d(512), nn.Dropout(), nn.Linear(128, 3))
+        self.bbox = nn.Sequential(nn.Linear(in_features, 4), nn.Sigmoid())
+        self.classifier = nn.Sequential(nn.Linear(512, 3))
 
     def forward(self, x):
         return self.bbox(x), self.classifier(x)
@@ -426,8 +426,8 @@ class DoorResNet(Universal):
         self.model = resnet18(weights=self.weights)
 
     def set_model_to_trainable(self):
-        for param in self.model.parameters():
-            param.requires_grad = False
+        #for param in self.model.parameters():
+        #    param.requires_grad = False
 
         num_features = self.model.fc.in_features
         FC_append = DoorFC(num_features)

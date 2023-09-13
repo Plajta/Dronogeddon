@@ -43,7 +43,7 @@ def run_models(wandb_logging, version):
     elif version == 2:
         MyDoorModel = DoorResNet().to(DEVICE)
         MyDoorModel.set_model_to_trainable()
-        MyDoorModel.run("DOOR-ResNet smallFC", train, test, validation)
+        #MyDoorModel.run("DOOR-ResNet smallFC", train, test, validation)
 
 def model_inference(path, type):
     #inference on notebook camera
