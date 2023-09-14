@@ -36,6 +36,11 @@ class DoorsDataset(Dataset):
     def __init__(self, type):
         self.dataset_path = os.getcwd() + "/src/neural/dataset/"
 
+        #classes
+        self.closed_num = 0
+        self.fully_opened = 0
+        self.half_opened = 0
+
         if type == "test":
             self.dataset_path += "test/"
         elif type == "valid":
@@ -46,10 +51,31 @@ class DoorsDataset(Dataset):
         self.path_labels = self.dataset_path + "labels/"
         self.path_imgs = self.dataset_path + "images"
 
-        #self.img_labels, self.images = self.read_data(dataset_path + "labels/", dataset_path + "images/")
+        self.scan()
 
     def __len__(self):
         return len(os.listdir(self.path_labels))
+    
+    def __print_statistics__(self):
+        print("n. o. closed: " + str(self.closed_num))
+        print("n. o. fully opened " + str(self.fully_opened))
+        print("n. o. half opened " + str(self.half_opened))
+
+    def scan(self):
+        arr_labels = os.listdir(self.path_labels)
+        for label in arr_labels:
+            label_path = os.path.join(self.path_labels, label)
+            file = open(label_path, "r")
+            file_data = file.readline()
+            file.close()
+
+            y = file_data.split(" ") #y - labels
+            if int(y[0]) == 0:
+                self.closed_num += 1
+            elif int(y[0]) == 1:
+                self.half_opened += 1
+            elif int(y[0]) == 2:
+                self.fully_opened += 2
     
     def __getitem__(self, index):
 
@@ -72,7 +98,6 @@ class DoorsDataset(Dataset):
         img = read_image(img_path)
 
         X = ImgTransform(img, False)
-        y = file_data.split(" ") #y - labels
 
         cls = one_hot(torch.tensor(int(y[0])), num_classes=3)
         bbox = torch.tensor([float(x) for x in y[1:5]])
@@ -100,8 +125,6 @@ class TestDoorsData(Dataset):
         return len(os.listdir(self.path_labels))
     
     def __getitem__(self, index):
-
-        
 
         arr_labels = os.listdir(self.path_labels)
         arr_images = os.listdir(self.path_imgs)
@@ -170,6 +193,13 @@ def inspect_dataset(index, dataloader):
 train_data = DoorsDataset("test")
 test_data = DoorsDataset("valid")
 valid_data = DoorsDataset("valid")
+
+print("train")
+train_data.__print_statistics__()
+print("test")
+test_data.__print_statistics__()
+print("valid")
+valid_data.__print_statistics__()
 
 train = DataLoader(train_data, batch_size=batch_size, shuffle=True)
 test = DataLoader(test_data, batch_size=batch_size, shuffle=True)
