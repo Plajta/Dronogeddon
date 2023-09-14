@@ -1,3 +1,3 @@
 import numpy as np
 
-map_data = np.zeros((500, 500))
+map_data = np.zeros((1000, 1000))
