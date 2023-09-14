@@ -145,6 +145,9 @@ def AI():
 
             output = model(torch_tensor)
             result = process_data(output, image)
+            cv2.rectangle(image, (result[0],result[1]), (result[2],result[3]), (0, 255, 0), 2)
+            print(result)
+            cv2.imshow("output_drone", image)
 
     
 
@@ -245,6 +248,7 @@ ToFmeter = Thread(target=ToF)
 AImeter = Thread(target=AI)
 videoRecorder = Thread(target=video_recording)
 
+AImeter.start()
 videoRecorder.start()
 time.sleep(10)
 tello.takeoff()
@@ -254,5 +258,4 @@ log("tello takeoff")
 #tello.move_up(100)
 
 
-AImeter.start()
 instructor.start()
