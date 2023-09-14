@@ -10,10 +10,10 @@ import threading
 from queue import Queue
 from neural.pretrained import model, convert_to_tensor, process_data, compute_dev, SCREEN_CENTER
 
-side_margin_low = 800
-side_margin_high = 1300
-side_margin_ignore = 1500
-border_front = 550
+side_margin_low = 80
+side_margin_high = 130
+side_margin_ignore = 150
+border_front = 55
 
 start_time = time.time()
 log_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.gmtime())
@@ -28,17 +28,18 @@ mean = [[],[],[]]
 def distancemeter():
     data = tf.mesurments()
     output = data
-    for i in range(0,3):
-        mean[i].append(data[i])
 
-    if len(mean[0]) > 13:
-        for i in range(0,3):
-            mean[i].pop(0)
-    for i,j in enumerate(mean):
-        output.append(0)
-        for k in j:
-            output[i+3] += k
-        output[i+3] = round(output[i+3] / len(j))
+    # for i in range(0,3):
+    #     mean[i].append(data[i])
+
+    # if len(mean[0]) > 13:
+    #     for i in range(0,3):
+    #         mean[i].pop(0)
+    # for i,j in enumerate(mean):
+    #     output.append(0)
+    #     for k in j:
+    #         output[i+3] += k
+    #     output[i+3] = round(output[i+3] / len(j))
 
     return(output)
 
@@ -62,6 +63,7 @@ def Convert_to_Instructions(y_deviation, x_deviation, ob_area):
     return [in2, in1]
 
 def stop_drone():
+    tello.send_rc_control(0,0,0,0)
     print("stop")
     tello.land()
     zastavovac.set()
@@ -83,14 +85,16 @@ def stop_drone():
 def video_recording():
     frame_read = tello.get_frame_read()
     height, width, _ = frame_read.frame.shape
-    video_out = cv2.VideoWriter(f'src/Flight_logs/video/flight_log_{log_time}.mkv', cv2.VideoWriter_fourcc(*'XVID'), 30, (width, height))
-    data = tf.mesurments()
+    video_out = cv2.VideoWriter(f'src/Flight_logs/video/flight_log_{log_time}.mkv', cv2.VideoWriter_fourcc(*'XVID'), 20, (width, height))
+    data = [0,0,distancemeter()]
     while not zastavovac.is_set():
-
         img_out = frame_read.frame
 
-        if instructions_ToF.empty() == False :
-            data = instructions_ToF.get()[2]
+        if telemetri.empty() == False :
+            data = telemetri.get()
+            print("video:")
+            print(data)
+
 
         cv2.putText(img_out, 
                     f"{round(time.time()-start_time, 2)}s", 
@@ -109,7 +113,7 @@ def video_recording():
                     cv2.LINE_4) 
         
         cv2.putText(img_out, 
-                f"left: {data[1]} front: {data[0]} right: {data[2]}", 
+                f"left: {data[2][1]} front: {data[2][0]} right: {data[2][2]}", 
                 (10, 700), 
                 font, 1/2, 
                 (0, 255, 255), 
@@ -129,14 +133,12 @@ def video_recording():
 
 def AI():
     while not zastavovac.is_set():
-        print("AI běží")
         """
         AI
         """
         if pictures.empty() == False :
 
             image = pictures.get()
-
 
 
             torch_tensor = convert_to_tensor(image)
@@ -160,13 +162,12 @@ def AI():
 
 def ToF():
     while not zastavovac.is_set():
-        print("tof běží")
         """
         ToF
         """
         data = distancemeter()
         
-        distance_front = data[3]
+        distance_front = data[0]
         distance_sideL = data[1]
         distance_sideR = data[2]
         speedFront = 0 
@@ -187,31 +188,27 @@ def ToF():
             speedSide = 0
         elif distance_sideR < local_side_margin_low:
             speedSide = -20
-
         elif distance_sideR > local_side_margin_high:
             speedSide = 20
-
         else:
             speedSide = 0
 
 
         if distance_front > border_front:
             speedFront = 30
-
         else:
             speedFront = 0
             tello.rotate_counter_clockwise(90)
 
-        print([speedSide, speedFront])
         instructions_ToF.queue.clear()
-        instructions_ToF.put([speedSide, speedFront,data])
+        instructions_ToF.put([speedSide, speedFront])
+        telemetri.put([speedSide, speedFront,data])
         #tello.send_rc_control(speedSide,speedFront,0,0)
 
 
 def process_instructions():
     while not zastavovac.is_set(): #i hate this
-        time.sleep(0.5)
-        print("instruktor běží")
+
         """
         CAMERA
         """
@@ -233,7 +230,6 @@ def process_instructions():
             ToF
             """
 
-            print([instruction_ToF[0],instruction_ToF[1],0,0])
             tello.send_rc_control(instruction_ToF[0],instruction_ToF[1],0,0)
 
 
@@ -248,6 +244,7 @@ def log(text="", entr="\n"):
 tello = Tello()
 instructions_cam = Queue()
 instructions_ToF = Queue()
+telemetri = Queue()
 pictures = Queue()
 
 tello.connect(False)
@@ -259,15 +256,14 @@ ToFmeter = Thread(target=ToF)
 AImeter = Thread(target=AI)
 videoRecorder = Thread(target=video_recording)
 
-
 videoRecorder.start()
-
-log("tello takeoff")
+time.sleep(10)
 tello.takeoff()
-#tello.move_up(100)
 
 ToFmeter.start()
+log("tello takeoff")
+#tello.move_up(100)
+
+
 AImeter.start()
 instructor.start()
-
-
