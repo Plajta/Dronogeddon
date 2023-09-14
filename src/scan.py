@@ -20,7 +20,7 @@ data = []
 
 start = tello.get_yaw()
 deg = start
-tello.send_rc_control(0,0,0,25)
+tello.send_rc_control(0,0,0,10)
 print("rotate")
 neg = False
 print(not(neg and deg >= start))
