@@ -12,7 +12,7 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-batch_size = 8 #i hate cuda-out of memory
+batch_size = 16 #i hate cuda-out of memory
 
 def ImgTransform(img, justconvert):
     #convert to size 640x480
@@ -98,6 +98,7 @@ class DoorsDataset(Dataset):
         img = read_image(img_path)
 
         X = ImgTransform(img, False)
+        y = file_data.split(" ") #y - labels
 
         cls = one_hot(torch.tensor(int(y[0])), num_classes=3)
         bbox = torch.tensor([float(x) for x in y[1:5]])
@@ -185,14 +186,14 @@ def inspect_dataset(index, dataloader):
     cv2.waitKey(0)
 
 #standart case
-#train_data = DoorsDataset("train")
-#test_data = DoorsDataset("test")
-#valid_data = DoorsDataset("valid")
+train_data = DoorsDataset("train")
+test_data = DoorsDataset("test")
+valid_data = DoorsDataset("valid")
 
 #to train on better data
-train_data = DoorsDataset("test")
-test_data = DoorsDataset("valid")
-valid_data = DoorsDataset("valid")
+#train_data = DoorsDataset("test")
+#test_data = DoorsDataset("valid")
+#valid_data = DoorsDataset("valid")
 
 print("train")
 train_data.__print_statistics__()
@@ -207,4 +208,4 @@ validation = DataLoader(valid_data, batch_size=batch_size, shuffle=True)
 
 
 #for i in range(500):
-#    inspect_dataset(i, train)
+#    inspect_dataset(i, test)

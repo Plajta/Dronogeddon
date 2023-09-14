@@ -1,4 +1,4 @@
-from read_dataset import train, test, validation, batch_size
+from read_dataset import batch_size
 
 from torchvision.models import resnet18, ResNet18_Weights #fasterrcnn_resnet50_fpn_v2, FasterRCNN_ResNet50_FPN_V2_Weights
 import torchinfo
@@ -425,9 +425,16 @@ class DoorResNet(Universal):
         self.weights = ResNet18_Weights.DEFAULT
         self.model = resnet18(weights=self.weights)
 
-    def set_model_to_trainable(self):
-        #for param in self.model.parameters():
-        #    param.requires_grad = False
+    def set_model_to_trainable(self, freeze = False):
+        if freeze == "half-freeze":
+            for name, param in self.model.named_parameters():
+                if "layer4" not in name:
+                    param.requires_grad = False
+                else:
+                    break
+        elif freeze == "full-freeze":
+            for name, param in self.model.named_parameters():
+                param.requires_grad = False
 
         num_features = self.model.fc.in_features
         FC_append = DoorFC(num_features)

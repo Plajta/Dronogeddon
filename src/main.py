@@ -145,17 +145,6 @@ def AI():
 
             output = model(torch_tensor)
             result = process_data(output, image)
-            if len(result) != 0: #just when the data is avaliable
-                y_dev, x_dev, area = compute_dev(result, image)
-
-                y_dev = round(y_dev / SCREEN_CENTER[0], 2)
-                x_dev = round(x_dev / SCREEN_CENTER[1], 2)
-
-                instruction = Convert_to_Instructions(y_dev, x_dev, area)
-                #print("IN:")
-                #print(instruction)
-                instructions_cam.queue.clear()
-                instructions_cam.put(instruction)
 
     
 

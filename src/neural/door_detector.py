@@ -42,8 +42,8 @@ def run_models(wandb_logging, version):
         MyDoorModel.run("DOOR-MyResNet", train, test, validation)
     elif version == 2:
         MyDoorModel = DoorResNet().to(DEVICE)
-        MyDoorModel.set_model_to_trainable()
-        #MyDoorModel.run("DOOR-ResNet smallFC", train, test, validation)
+        MyDoorModel.set_model_to_trainable("half-freeze")
+        MyDoorModel.run("DOOR-ResNet largeFC", train, test, validation)
 
 def model_inference(path, type):
     #inference on notebook camera
@@ -65,6 +65,8 @@ def model_inference(path, type):
 
             idx = torch.argmax(out_cls)
             out_bbox = out_bbox[0].detach().cpu().numpy()
+
+            print(out_bbox)
 
             cls = ""
             if idx == 0:
@@ -144,4 +146,4 @@ def model_inference(path, type):
             cv2.waitKey(0)
 
 run_models(True, 2)
-#model_inference("014.pth", "local")
+#model_inference("05.pth", "local")
