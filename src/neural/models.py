@@ -143,7 +143,7 @@ class Universal(nn.Module):
         init_loss, init_acc = self.test_net(test_loader)
         print(init_loss, init_acc)
         if LOGGING:
-            Wandb.wandb.log({"test_acc": init_acc, "test_loss": init_loss})
+            Wandb.wandb.log({"cum_test_acc": init_acc, "cum_test_loss": init_loss})
         for i, epoch in enumerate(range(self.config["epochs"])):
 
             #train epoch and log
@@ -158,7 +158,7 @@ class Universal(nn.Module):
             print(test_loss, test_acc)
             print("test " + str(i) + "epoch")
             if LOGGING:
-                Wandb.wandb.log({"test_acc": test_acc, "test_loss": test_loss})
+                Wandb.wandb.log({"cum_test_acc": test_acc, "cum_test_loss": test_loss})
 
             
             
