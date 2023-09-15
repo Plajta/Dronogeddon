@@ -186,14 +186,14 @@ def inspect_dataset(index, dataloader):
     cv2.waitKey(0)
 
 #standart case
-train_data = DoorsDataset("train")
-test_data = DoorsDataset("test")
-valid_data = DoorsDataset("valid")
+#train_data = DoorsDataset("train")
+#test_data = DoorsDataset("test")
+#valid_data = DoorsDataset("valid")
 
 #to train on better data
-#train_data = DoorsDataset("test")
-#test_data = DoorsDataset("valid")
-#valid_data = DoorsDataset("valid")
+train_data = DoorsDataset("test")
+test_data = DoorsDataset("valid")
+valid_data = DoorsDataset("valid")
 
 print("train")
 train_data.__print_statistics__()

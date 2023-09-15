@@ -31,10 +31,14 @@ class Universal(nn.Module):
     def train_net(self, train):
         idx = 0
         total_loss = 0
+        total_loss_cls = 0
+        total_loss_bbox = 0
+
         correct = 0
 
         self.train()
         for X, y in train:
+
             X = X.to(DEVICE)
 
             self.optimizer.zero_grad()
@@ -59,6 +63,8 @@ class Universal(nn.Module):
 
             idx += 1
             total_loss += loss.detach().item()
+            total_loss_cls += loss_cls.detach().item()
+            total_loss_bbox += loss_bbox.detach().item()
 
             for i in range(output_cls.shape[0]):
                 output_idx = torch.argmax(output_cls[i])
@@ -66,24 +72,28 @@ class Universal(nn.Module):
                 if output_idx == target_idx:
                     correct += 1
             
-            if idx % LOG_FREQ == 0:
-                print("train loss: " + str(loss.item()))
-                if LOGGING:
-                    Wandb.wandb.log({"train_loss": loss.item(), "train_acc": correct / (idx * BATCH)})
+            #if idx % LOG_FREQ == 0:
+            #    print("train loss: " + str(loss.item()))
+            #if LOGGING:
+            #    Wandb.wandb.log({"train/loss": loss.item(), "train/acc": correct / (idx * BATCH)})
 
-                    #logging losses separately
-                    Wandb.wandb.log({"train_loss_bbox": loss_bbox.item(), "train_loss_cls": loss_cls.item()})
+                #logging losses separately
+            #    Wandb.wandb.log({"train/loss_bbox": loss_bbox.item(), "train/loss_cls": loss_cls.item()})
                 
             #free the memory
             torch.cuda.empty_cache()
 
-        return total_loss / idx
+        if LOGGING:
+            Wandb.wandb.log({"train/loss": total_loss / idx, "train/acc": correct / (idx * BATCH)})
+            Wandb.wandb.log({"train/loss_cls": total_loss_cls / idx, "train/loss_bbox": total_loss_bbox / idx})
     
     def test_net(self, test):
         self.eval()
         idx = 0
         correct = 0
         total_loss = 0
+        total_loss_bbox = 0
+        total_loss_cls = 0
 
         for X, y in test:
             X = X.to(DEVICE)
@@ -102,6 +112,8 @@ class Universal(nn.Module):
             loss = loss_cls + loss_bbox
 
             total_loss += loss.detach().item()
+            total_loss_cls += loss_cls.detach().item()
+            total_loss_bbox += loss_bbox.detach().item()
 
             idx += 1
 
@@ -111,18 +123,22 @@ class Universal(nn.Module):
                 if output_idx == target_idx:
                     correct += 1
 
-            #test set has only 286 images, so i am going to log this every iteration
             print("test loss: " + str(loss.item()), "test acc: " + str(correct / (idx * BATCH)))
-            if LOGGING:
-                Wandb.wandb.log({"test_loss": loss.item(), "test_acc": correct / (idx * BATCH)})
+            #if LOGGING:
+            #    Wandb.wandb.log({"test/loss": loss.item(), "test/acc": correct / (idx * BATCH)})
 
                 #logging losses separately
-                Wandb.wandb.log({"test_loss_bbox": loss_bbox.item(), "test_loss_cls": loss_cls.item()})
+            #    Wandb.wandb.log({"test/loss_bbox": loss_bbox.item(), "test/loss_cls": loss_cls.item()})
 
             #free the memory
             torch.cuda.empty_cache()
 
-        return total_loss / idx, correct / (idx * BATCH)
+        if LOGGING:
+            Wandb.wandb.log({"test/loss": total_loss / idx, "test/acc": correct / (idx * BATCH)})
+            Wandb.wandb.log({"test/loss_cls": total_loss_cls / idx, "test/loss_bbox": total_loss_bbox / idx})
+
+    def validate_net(self, valid):
+        pass
 
     def run(self, model_name, train_loader, test_loader, valid_loader):
 
@@ -140,30 +156,18 @@ class Universal(nn.Module):
         if LOGGING:
             Wandb.Init("DOOR-RCNN", self.config, model_name + " run:" + str(self.model_iter))
         
-        init_loss, init_acc = self.test_net(test_loader)
-        print(init_loss, init_acc)
-        if LOGGING:
-            Wandb.wandb.log({"cum_test_acc": init_acc, "cum_test_loss": init_loss})
+        self.test_net(test_loader)
         for i, epoch in enumerate(range(self.config["epochs"])):
+            print(str(i) + " epoch")
 
             #train epoch and log
-            train_loss = self.train_net(train_loader)
-            print(train_loss)
-            print("train " + str(i) + " epoch")
-            if LOGGING:
-                Wandb.wandb.log({"train_loss": train_loss})
+            self.train_net(train_loader)
 
             #test epoch and log
-            test_loss, test_acc = self.test_net(test_loader)
-            print(test_loss, test_acc)
-            print("test " + str(i) + "epoch")
-            if LOGGING:
-                Wandb.wandb.log({"cum_test_acc": test_acc, "cum_test_loss": test_loss})
+            self.test_net(test_loader)
 
-            
-            
-            print("train loss:", train_loss, "train acc : TODO")
-            print("test loss:", test_loss, "test acc:", test_acc)
+            #validate after every epoch
+            self.validate_net(valid_loader)
 
             torch.save(self, os.getcwd() + "/src/neural/saved_models/" + str(self.model_iter) + str(epoch) + ".pth")     
             torch.cuda.empty_cache()

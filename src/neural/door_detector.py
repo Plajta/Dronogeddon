@@ -147,4 +147,4 @@ def model_inference(path, type):
             cv2.waitKey(0)
 
 run_models(True, 2)
-#model_inference("05.pth", "local")
+#model_inference("06.pth", "local")
