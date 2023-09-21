@@ -26,6 +26,7 @@ import gc
 LOG_FREQ = 5
 BATCH = batch_size
 
+n_classes = 3 #TODO
 
 #free allocated cuda memory
 torch.cuda.empty_cache()

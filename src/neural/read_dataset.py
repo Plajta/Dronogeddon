@@ -106,6 +106,80 @@ class DoorsDataset(Dataset):
 
         return X, y
     
+class DetectDoorsDataset(Dataset): #TODO
+    def __init__(self, type):
+        self.dataset_path = os.getcwd() + "/src/neural/dataset/"
+
+        #classes
+        self.closed_num = 0
+        self.fully_opened = 0
+        self.half_opened = 0
+
+        if type == "test":
+            self.dataset_path += "test/"
+        elif type == "valid":
+            self.dataset_path += "valid/"
+        else:
+            self.dataset_path += "train/"
+
+        self.path_labels = self.dataset_path + "labels/"
+        self.path_imgs = self.dataset_path + "images"
+
+        self.scan()
+
+    def __len__(self):
+        return len(os.listdir(self.path_labels))
+    
+    def __print_statistics__(self):
+        print("n. o. closed: " + str(self.closed_num))
+        print("n. o. fully opened " + str(self.fully_opened))
+        print("n. o. half opened " + str(self.half_opened))
+
+    def scan(self):
+        arr_labels = os.listdir(self.path_labels)
+        for label in arr_labels:
+            label_path = os.path.join(self.path_labels, label)
+            file = open(label_path, "r")
+            file_data = file.readline()
+            file.close()
+
+            y = file_data.split(" ") #y - labels
+            if int(y[0]) == 0:
+                self.closed_num += 1
+            elif int(y[0]) == 1:
+                self.half_opened += 1
+            elif int(y[0]) == 2:
+                self.fully_opened += 2
+    
+    def __getitem__(self, index):
+
+        arr_labels = os.listdir(self.path_labels)
+        arr_images = os.listdir(self.path_imgs)
+
+        label_path = os.path.join(self.path_labels, arr_labels[index])
+        file = open(label_path, "r")
+        file_data = file.readline()
+        file.close()
+
+        index_img = 0
+
+        identify = label_path.replace(self.dataset_path + "labels/", "").replace(".txt", "")
+        for i, image_path in enumerate(arr_images):
+            if identify in image_path:
+                index_img = i
+
+        img_path = os.path.join(self.path_imgs, arr_images[index_img].replace(".txt", "jpg"))
+        img = read_image(img_path)
+
+        X = ImgTransform(img, False)
+        y = file_data.split(" ") #y - labels
+
+        cls = one_hot(torch.tensor(int(y[0])), num_classes=3)
+        bbox = torch.tensor([float(x) for x in y[1:5]])
+        y = torch.cat((cls, bbox))
+
+        return X, y
+    
 class TestDoorsData(Dataset):
     def __init__(self, type):
         self.dataset_path = os.getcwd() + "/src/neural/dataset/"

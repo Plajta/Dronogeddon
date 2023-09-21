@@ -23,6 +23,12 @@ sender.yml
 /src/neural/dataset/train
 /src/neural/dataset/valid
 
+/src/neural/dataset_test
+
+/src/neural/dataset2/test/
+/src/neural/dataset2/train/
+/src/neural/dataset2/valid/
+
 #saved models directory
 !/src/neural/saved_models/.gitkeep
 /src/neural/saved_models/*
