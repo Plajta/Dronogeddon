@@ -225,6 +225,7 @@ def process_instructions():
             tello.send_rc_control(instruction_ToF[0],instruction_ToF[1],0,0)
 
 
+
 log_pad = open(f"src/Flight_logs/txt/flight_log_{log_time}.txt", 'w')
 log_pad.write(f"start of the program at {log_time}\n\n")
 log_pad.write(f"side margin low is: {side_margin_low} || side mrgin high is {side_margin_high} || border front is {border_front} || batery is n\n")

@@ -1,8 +1,28 @@
 from djitellopy import Tello
 import ToF as tf
-import numpy as np
-import time
+import visual as vis
+from threading import Thread
+import threading
+import cv2
+from queue import Queue
 
+zastavovac = threading.Event()
+
+def visualisation():
+    vis.map_init()
+    print(zastavovac.is_set())
+    print(map_data.empty())
+    while (not zastavovac.is_set()) or (not map_data.empty()):
+        if map_data.empty() == False :
+            mapdata = map_data.get()
+            vis.update_map(*mapdata)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+visual = Thread(target=visualisation)
+
+map_data = Queue()
+visual.start()
 tello = Tello()
 tello.connect(False)
 
@@ -10,17 +30,11 @@ tello.send_rc_control(0,0,0,0)
 tello.takeoff()
 data = []
 
-# for i in range(8):
-#     deg = tello.get_yaw()
-#     dis = tf.mesurments()
-#     print(f"stupně: {deg[0]} vzdálenost {dis}")
-#     tello.rotate_clockwise(45)
-#     data.append([dis[0],deg])
 
 
 start = tello.get_yaw()
 deg = start
-tello.send_rc_control(0,0,0,10)
+tello.send_rc_control(0,0,0,30)
 print("rotate")
 neg = False
 print(not(neg and deg >= start))
@@ -33,10 +47,15 @@ while not(neg and deg >= start):
     deg = tello.get_yaw()
     dis = tf.mesurments()
     print(f"vzdálenost: {dis[0]}  stupně: {deg}")
-    data.append([dis[0],deg])
     
+    data.append([dis[0],deg])
+    map_data.put([dis[0],deg])
+
+zastavovac.set()
 tello.send_rc_control(0,0,0,0)
 print("konec")
 print(data)
 tello.land()
 
+while not cv2.waitKey(0) & 0xFF == ord('q'):
+        pass
