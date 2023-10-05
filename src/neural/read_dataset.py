@@ -182,7 +182,7 @@ class DetectDoorsDataset(Dataset): #TODO
     
 class TestDoorsData(Dataset):
     def __init__(self, type):
-        self.dataset_path = os.getcwd() + "/src/neural/dataset/"
+        self.dataset_path = os.getcwd() + "/src/neural/dataset_test/"
 
         if type == "test":
             self.dataset_path += "test/"
@@ -269,16 +269,20 @@ train_data = DoorsDataset("test")
 test_data = DoorsDataset("valid")
 valid_data = DoorsDataset("valid")
 
+#train_data = TestDoorsData("test")
+#test_data = TestDoorsData("valid")
+#valid_data = TestDoorsData("valid")
+
 print("train")
-train_data.__print_statistics__()
+#train_data.__print_statistics__()
 print("test")
-test_data.__print_statistics__()
+#test_data.__print_statistics__()
 print("valid")
-valid_data.__print_statistics__()
+#valid_data.__print_statistics__()
 
 train = DataLoader(train_data, batch_size=batch_size, shuffle=True)
-test = DataLoader(test_data, batch_size=batch_size, shuffle=True)
-validation = DataLoader(valid_data, batch_size=batch_size, shuffle=True)
+test = DataLoader(test_data, batch_size=batch_size, shuffle=False)
+validation = DataLoader(valid_data, batch_size=batch_size, shuffle=False)
 
 
 #for i in range(500):

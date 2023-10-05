@@ -10,9 +10,6 @@ import torch.optim as optim
 from torch.optim import lr_scheduler
 import torch
 
-#if i am offline
-import numpy as np
-
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 LOG_FREQ = 5
 BATCH = batch_size
@@ -23,11 +20,24 @@ class Universal(nn.Module):
         super(Universal, self).__init__()
         self.model_iter = 0
         self.config = {
-            "epochs": 15,
+            "epochs": 10,
             "optimizer": "adam",
             "metric": "accuracy"
         }
     
+    def set_model_to_trainable(self, freeze):
+        if freeze == "half-freeze":
+            for name, param in self.model.named_parameters():
+                if not ("layer4" in name or "fc" in name): #other layers that "layer4" or fc
+                    param.requires_grad = False
+                else: 
+                    param.requires_grad = True
+
+
+        elif freeze == "full-freeze":
+            for name, param in self.model.named_parameters():
+                param.requires_grad = False
+
     def train_net(self, train):
         idx = 0
         total_loss = 0
@@ -37,8 +47,8 @@ class Universal(nn.Module):
         correct = 0
 
         self.train()
+        self.set_model_to_trainable("half-freeze")
         for X, y in train:
-
             X = X.to(DEVICE)
 
             self.optimizer.zero_grad()
@@ -89,6 +99,9 @@ class Universal(nn.Module):
     
     def test_net(self, test):
         self.eval()
+        torch.no_grad()
+        self.set_model_to_trainable("full-freeze")
+
         idx = 0
         correct = 0
         total_loss = 0
@@ -149,7 +162,7 @@ class Universal(nn.Module):
         #self.scheduler = lr_scheduler.StepLR(self.optimizer, step_size=7, gamma=0.1)
 
         #get info
-        torchinfo.summary(self, (1, 3, 640, 480))
+        #torchinfo.summary(self, (1, 3, 640, 480))
 
         self.to(DEVICE)
 
@@ -429,21 +442,11 @@ class DoorResNet(Universal):
         self.weights = ResNet18_Weights.DEFAULT
         self.model = resnet18(weights=self.weights)
 
-    def set_model_to_trainable(self, freeze = False):
-        if freeze == "half-freeze":
-            for name, param in self.model.named_parameters():
-                if "layer4" not in name:
-                    param.requires_grad = False
-                else:
-                    break
-        elif freeze == "full-freeze":
-            for name, param in self.model.named_parameters():
-                param.requires_grad = False
-
         num_features = self.model.fc.in_features
         FC_append = DoorFC(num_features)
         self.model.fc = FC_append
 
+        self.set_model_to_trainable("half-freeze") #just to see number of parameters
         torchinfo.summary(self.model, (1, 3, 640, 480))
 
     def forward(self, x):

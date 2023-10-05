@@ -43,7 +43,6 @@ def run_models(wandb_logging, version):
         MyDoorModel.run("DOOR-MyResNet", train, test, validation)
     elif version == 2:
         MyDoorModel = DoorResNet().to(DEVICE)
-        MyDoorModel.set_model_to_trainable("half-freeze")
         MyDoorModel.run("DOOR-ResNet largeFC", train, test, validation)
 
 def model_inference(path, type):
@@ -147,5 +146,5 @@ def model_inference(path, type):
 
             cv2.waitKey(0)
 
-run_models(True, 2)
-#model_inference("06.pth", "local")
+run_models(False, 2)
+#model_inference("05.pth", "local")
