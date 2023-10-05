@@ -1,42 +1,65 @@
 from djitellopy import Tello
 import ToF as tf
-import numpy as np
-import time
+import visual as vis
+from threading import Thread
+import threading
+import cv2
+from queue import Queue
 
-tello = Tello()
-tello.connect(False)
+zastavovac = threading.Event()
+map_data = Queue()
 
-tello.send_rc_control(0,0,0,0)
-tello.takeoff()
-data = []
+def visualisation():
+    vis.map_init()
+    print(zastavovac.is_set())
+    print(map_data.empty())
+    while (not zastavovac.is_set()) or (not map_data.empty()):
+        if map_data.empty() == False :
+            mapdata = map_data.get()
+            vis.update_map(*mapdata)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
-# for i in range(8):
-#     deg = tello.get_yaw()
-#     dis = tf.mesurments()
-#     print(f"stupně: {deg[0]} vzdálenost {dis}")
-#     tello.rotate_clockwise(45)
-#     data.append([dis[0],deg])
+def scan():
+    visual = Thread(target=visualisation)
+    visual.start()
+    tello = Tello()
+    tello.connect(False)
+
+    tello.send_rc_control(0,0,0,0)
+    tello.takeoff()
+    data = []
 
 
-start = tello.get_yaw()
-deg = start
-tello.send_rc_control(0,0,0,10)
-print("rotate")
-neg = False
-print(not(neg and deg >= start))
-print(start)
-while not(neg and deg >= start):
-    print(f"neg: {neg} deg >= start: {deg >= start} all: {neg and deg >= start}")
-    neg = deg < start
-    print(deg >= start)
 
-    deg = tello.get_yaw()
-    dis = tf.mesurments()
-    print(f"vzdálenost: {dis[0]}  stupně: {deg}")
-    data.append([dis[0],deg])
-    
-tello.send_rc_control(0,0,0,0)
-print("konec")
-print(data)
-tello.land()
+    start = tello.get_yaw()
+    deg = start
+    tello.send_rc_control(0,0,0,30)
+    print("rotate")
+    neg = False
+    print(not(neg and deg >= start))
+    print(start)
+    while not(neg and deg >= start):
+        print(f"neg: {neg} deg >= start: {deg >= start} all: {neg and deg >= start}")
+        neg = deg < start
+        print(deg >= start)
 
+        deg = tello.get_yaw()
+        dis = tf.mesurments()
+        print(f"vzdálenost: {dis[0]}  stupně: {deg}")
+        
+        data.append([dis[0],deg])
+        map_data.put([dis[0],deg])
+
+    zastavovac.set()
+    tello.send_rc_control(0,0,0,0)
+    print("konec")
+    print(data)
+    tello.land()
+
+
+
+if __name__ == "__main__":
+    scan()
+    while not cv2.waitKey(0) & 0xFF == ord('q'):
+        pass
