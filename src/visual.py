@@ -35,7 +35,7 @@ def update_map(dist, curr_angle):
 
     try:
         map_data[round(xpos), round(ypos)] = 1
-        map = cv2.circle(map, (round(xpos), round(ypos)), 1, (0, 0, 0), 2)
+        map = cv2.circle(map, (round(ypos), round(xpos)), 1, (0, 0, 0), 2)
     except IndexError as e:
         print(e)
 
