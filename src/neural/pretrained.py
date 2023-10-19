@@ -64,3 +64,17 @@ def compute_dev(results, frame):
     x_dev = x - SCREEN_CENTER[1]
 
     return y_dev, x_dev, area_used
+
+if __name__ == "__main__":
+    vid = cv2.VideoCapture(0) 
+    while True:
+        ret, frame = vid.read() 
+
+        torch_frame = convert_to_tensor(frame)
+        out = model(torch_frame)
+        process_data(out, frame)
+
+        cv2.imshow('frame', frame) 
+
+        if cv2.waitKey(1) & 0xFF == ord('q'): 
+            break
