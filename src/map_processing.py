@@ -13,6 +13,11 @@ brum = [[378, -3], [378, -3], [378, -3], [380, -2], [380, 0], [381, 0], [383, 2]
 
 print(len(brum))
 
+class MapProcessing:
+    def __init__(self):
+        self.tmp_map = np.zeros((1200, 1200), dtype=np.uint8)
+        self.corners = []
+
 
 def map_init():
     global map, map_data
