@@ -39,10 +39,11 @@ def update_map(dist, curr_angle):
     except IndexError as e:
         print(e)
 
-    cv2.imshow("Brum...", map_data)
-    cv2.imshow("Brumik.", map)
+    #cv2.imshow("Brum...", map_data)
+    #cv2.imshow("Brumik.", map)
 
-    pass
+def process_map(map_vis):
+    cv2.imshow("map", map_vis)
 
 
 if __name__ == "__main__":
@@ -51,6 +52,9 @@ if __name__ == "__main__":
         update_map(*i)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+    
+    process_map(map)
+    
     while not cv2.waitKey(0) & 0xFF == ord('q'):
         pass
 
