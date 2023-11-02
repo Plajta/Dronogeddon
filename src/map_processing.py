@@ -47,9 +47,41 @@ def update_map(dist, curr_angle):
     #cv2.imshow("Brum...", map_data)
     #cv2.imshow("Brumik.", map)
 
-def process_map(map_vis):
-    cv2.imshow("map", map_vis)
+def process_map(map_vis, map_d):
+    line_d = np.zeros(map_d.shape[:2], dtype=np.uint8)
 
+    #Dilation
+    kernel = np.ones((8, 8), np.uint8) 
+    map_d_dilated = cv2.dilate(map_d, kernel, iterations=1).astype(np.uint8) * 255
+    
+    #HoughLines
+    linesP = cv2.HoughLinesP(map_d_dilated, 1, np.pi / 180, 50, None, 80, 40)
+    if linesP is not None:
+        for i in range(0, len(linesP)):
+            l = linesP[i][0]
+            cv2.line(map, (l[0], l[1]), (l[2], l[3]), (0,0,255), 3, cv2.LINE_AA)
+            cv2.line(line_d, (l[0], l[1]), (l[2], l[3]), 255, 3, cv2.LINE_AA)
+
+    points = []
+
+    #Get Extremes
+    for line in linesP:
+        x1 = line[0][0]
+        y1 = line[0][1]
+        x2 = line[0][2]
+        y2 = line[0][3]
+
+        cv2.circle(map_vis, (x1, y1), 8, (255, 0, 0), -1)
+        cv2.circle(map_vis, (x2, y2), 8, (0, 255, 0), -1)
+
+        points.append([x1, y1])
+        points.append([x2, y2])
+
+    print(points)
+
+    cv2.imshow("map", map_vis)
+    cv2.imshow("map_dilated", map_d_dilated)
+    cv2.imshow("line_data", line_d)
 
 if __name__ == "__main__":
     map_init()
@@ -58,7 +90,7 @@ if __name__ == "__main__":
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     
-    process_map(map)
+    process_map(map, map_data)
     
     while not cv2.waitKey(0) & 0xFF == ord('q'):
         pass
