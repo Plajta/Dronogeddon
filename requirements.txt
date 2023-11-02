@@ -6,5 +6,6 @@ pyyaml
 customtkinter
 torchvision
 torch
+seaborn
 
 #NOTE: dont use this on conda builds!
