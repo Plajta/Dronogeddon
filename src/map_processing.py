@@ -39,11 +39,20 @@ class MapProcessing:
 
         map_vis = np.full((xsize, ysize, 3), 255, dtype='uint8')
 
+        # draw drone position (in center)
         map_vis = cv2.line(map_vis, (round(xsize/2-20), round(ysize/2-20)), (round(xsize/2+20), round(ysize/2+20)), (0, 255, 0), 2)
         map_vis = cv2.line(map_vis, (round(xsize/2+20), round(ysize/2-20)), (round(xsize/2-20), round(ysize/2+20)), (0, 255, 0), 2)
-        # draw drone position (in center)
-        pass
 
+        # draw scale
+        length = 80
+        xstart = xsize-100
+        ystart = 50
+        color = (63, 63, 63)
+        map_vis = cv2.putText(map_vis, f"{length} cm", (xstart, ystart-15), cv2.FONT_HERSHEY_SIMPLEX, 0.75, color)
+        map_vis = cv2.line(map_vis, (xstart, ystart), (xstart+length, ystart), color, 1)
+        map_vis = cv2.line(map_vis, (xstart, ystart-10), (xstart, ystart+10), color, 1)
+        map_vis = cv2.line(map_vis, (xstart+length, ystart-10), (xstart+length, ystart+10), color, 1)
+        pass
 
     def update_map(self, dist, curr_angle, color):
         global map_vis, map_data
@@ -122,6 +131,7 @@ class MapProcessing:
         cv2.imshow("map", map_vis)
         cv2.imshow("map_dilated", map_d_dilated)
         cv2.imshow("line_data", line_d)
+
 
 if __name__ == "__main__":
     proc_instance = MapProcessing()
