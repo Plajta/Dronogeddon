@@ -147,7 +147,6 @@ class MapProcessing:
 
             for search_point in points_copy:
                 if search_point in iterated_points:
-                    print("SEX")
                     continue
 
                 d_x = abs(point[0] - search_point[0])
