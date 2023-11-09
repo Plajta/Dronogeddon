@@ -1,6 +1,6 @@
 from djitellopy import Tello
 import ToF as tf
-import map_processing as vis
+#import map_processing as vis
 from threading import Thread
 import threading
 import cv2
@@ -21,8 +21,8 @@ def visualisation():
                 break
 
 def scan():
-    visual = Thread(target=visualisation)
-    visual.start()
+    # visual = Thread(target=visualisation)
+    # visual.start()
     tello = Tello()
     tello.connect(False)
 
@@ -48,8 +48,8 @@ def scan():
         dis = tf.mesurments()
         print(f"vzdálenost: {dis[0]}  stupně: {deg}")
         
-        data.append([dis[0],deg])
-        map_data.put([dis[0],deg])
+        data.append([dis,deg])
+        #map_data.put([dis[0],deg])
 
     zastavovac.set()
     tello.send_rc_control(0,0,0,0)
