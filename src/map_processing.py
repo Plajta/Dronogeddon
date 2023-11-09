@@ -98,7 +98,7 @@ class MapProcessing:
             points.append([x2, y2])
 
         #categorize extremes into clusters (kmeans) and predict number of points using silhouette method
-        kmeans = KMeans(n_init="auto", init="k-means++")
+        kmeans = KMeans(n_init="auto", init="k-means++", n_clusters=16)
         kmeans.fit(points)
 
 
@@ -156,9 +156,7 @@ class MapProcessing:
 
             #sort distances by 
             distances_np = np.array(distances)
-            distances_sorted = np.sort(distances_np, axis=0)
-
-            print(distances_sorted)
+            distances_sorted = distances_np[distances_np[:, 1].argsort()]
 
             #get two triangle points
             a1 = distances_sorted[0][1:].astype(np.uint64)
