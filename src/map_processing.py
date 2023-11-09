@@ -97,11 +97,22 @@ class MapProcessing:
             points.append([x1, y1])
             points.append([x2, y2])
 
+        return points
+
+    def get_waypoints_kmeans_triangles(self, points):
         #categorize extremes into clusters (kmeans) and predict number of points using silhouette method
-        kmeans = KMeans(n_init="auto", init="k-means++", n_clusters=16)
+        lim = len(points)
+
+        scores = []
+        for k in range(2, lim + 1):
+            kmeans = KMeans(n_init="auto", init="k-means++", n_clusters=16)
+            kmeans.fit(points)
+            pred = kmeans.predict(points)
+            score = silhouette_score(points, pred)
+            scores.append(score)
+
+        kmeans = KMeans(n_init="auto", init="k-means++", n_clusters=lim)
         kmeans.fit(points)
-
-
 
         labels = kmeans.labels_
         n_clusters = labels.max()
@@ -173,8 +184,12 @@ class MapProcessing:
             cv2.line(map_vis, a2, point, (0, 255, 0), 3)
 
         cv2.imshow("map", map_vis)
-        cv2.imshow("map_dilated", map_d_dilated)
-        cv2.imshow("line_data", line_d)
+    
+    def get_waypoints_kdtree_triangles():
+        #get waypoints using kdtree
+        pass
+
+    
 
 
 if __name__ == "__main__":
@@ -188,7 +203,8 @@ if __name__ == "__main__":
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     
-    proc_instance.process_map(map_vis, map_data)
+    point_data = proc_instance.process_map(map_vis, map_data)
+    proc_instance.get_waypoints(point_data)
     
     while not cv2.waitKey(0) & 0xFF == ord('q'):
         pass
