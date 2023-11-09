@@ -10,7 +10,7 @@ log_time = time.strftime("%Y_%m_%d_%H_%M_%S", time.gmtime())
 font = cv2.FONT_HERSHEY_SIMPLEX
 frame_read = tello.get_frame_read()
 height, width, _ = frame_read.frame.shape
-video_out = cv2.VideoWriter(f'src/Flight_logs/video/flight_log_{log_time}.mkv', cv2.VideoWriter_fourcc(*'XVID'), 20, (width, height))
+video_out = cv2.VideoWriter(f'src/Flight_logs/video/flight_log_{log_time}.mkv', cv2.VideoWriter_fourcc(*'XVID'), 30, (width, height))
 
 
 def video_recording_loop(data):

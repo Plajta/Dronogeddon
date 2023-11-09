@@ -12,8 +12,6 @@ class DroneController:
         self.lock = threading.Lock()
         self.telloLock = threading.Lock()
         self.stop_program = False
-        self.current_work_thread = 0
-        
 
     def get_distance_data(self):
         with self.lock:
