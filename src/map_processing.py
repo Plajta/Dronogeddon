@@ -46,7 +46,7 @@ class MapProcessing:
 
         # draw scale
         length = 80
-        xstart = xsize-100
+        xstart = 20
         ystart = 50
         color = (63, 63, 63)
         map_vis = cv2.putText(map_vis, f"{length} cm", (xstart, ystart-15), cv2.FONT_HERSHEY_SIMPLEX, 0.75, color)
