@@ -40,13 +40,22 @@ class MapProcessing:
 
         map_vis = np.full((xsize, ysize, 3), 255, dtype='uint8')
 
+        # draw drone position (in center)
         map_vis = cv2.line(map_vis, (round(xsize/2-20), round(ysize/2-20)), (round(xsize/2+20), round(ysize/2+20)), (0, 255, 0), 2)
         map_vis = cv2.line(map_vis, (round(xsize/2+20), round(ysize/2-20)), (round(xsize/2-20), round(ysize/2+20)), (0, 255, 0), 2)
-        # draw drone position (in center)
+
+        # draw scale
+        length = 80
+        xstart = xsize-100
+        ystart = 50
+        color = (63, 63, 63)
+        map_vis = cv2.putText(map_vis, f"{length} cm", (xstart, ystart-15), cv2.FONT_HERSHEY_SIMPLEX, 0.75, color)
+        map_vis = cv2.line(map_vis, (xstart, ystart), (xstart+length, ystart), color, 1)
+        map_vis = cv2.line(map_vis, (xstart, ystart-10), (xstart, ystart+10), color, 1)
+        map_vis = cv2.line(map_vis, (xstart+length, ystart-10), (xstart+length, ystart+10), color, 1)
         pass
 
-
-    def update_map(self, dist, curr_angle):
+    def update_map(self, dist, curr_angle, color):
         global map_vis, map_data
 
         xpos = np.cos(-curr_angle/180*np.pi)*dist/2 + xsize/2
@@ -54,7 +63,7 @@ class MapProcessing:
 
         try:
             map_data[round(xpos), round(ypos)] = 1
-            map_vis = cv2.circle(map_vis, (round(ypos), round(xpos)), 1, (0, 0, 0), 2)
+            map_vis = cv2.circle(map_vis, (round(ypos), round(xpos)), 1, color, 2)
         except IndexError as e:
             print(e)
 
@@ -170,15 +179,14 @@ class MapProcessing:
         cv2.imshow("map_dilated", map_d_dilated)
         cv2.imshow("line_data", line_d)
 
+
 if __name__ == "__main__":
     proc_instance = MapProcessing()
 
     proc_instance.map_init()
     for (f, l, r, b, qual), deg in brum:
-        proc_instance.update_map(f, deg)
-        #proc_instance.update_map(l, deg - 90)
-        #proc_instance.update_map(r, deg + 90)
-        #proc_instance.update_map(b, deg + 180)
+        proc_instance.update_map(f, deg, (0, 0, 0))
+        proc_instance.update_map(b, deg+180, (0, 128, 128))
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

@@ -114,7 +114,7 @@ static uint8_t tt_graph_buff[] = {
 
 int tof_callback(int argc, char *argv[], char argv2[])
 {
-    CommonSerial.printf("tof %d %d %d", tof_range1, tof_range2, tof_range3, dist, strength);
+    CommonSerial.printf("tof %d %d %d %d %d", tof_range1, tof_range2, tof_range3, dist, strength);
 }
 
 void IRAM_ATTR key_doubleclick()
