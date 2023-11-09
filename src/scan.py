@@ -1,6 +1,6 @@
 from djitellopy import Tello
-import ToF as tf
-#import map_processing as vis
+from example import ToF as tf
+import map_processing as vis
 from threading import Thread
 import threading
 import cv2

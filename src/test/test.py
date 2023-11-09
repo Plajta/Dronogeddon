@@ -118,7 +118,7 @@ if __name__ == "__main__":
     drone_controller.start_flight()
     
 
-    video_thread = threading.Thread(target=self.capture_video_with_telemetry)
+    video_thread = threading.Thread(target=drone_controller.capture_video_with_telemetry)
     video_thread.start()
 
     #flight_controller = FlightController(self)
