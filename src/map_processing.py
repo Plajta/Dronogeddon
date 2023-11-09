@@ -45,7 +45,7 @@ class MapProcessing:
         pass
 
 
-    def update_map(self, dist, curr_angle):
+    def update_map(self, dist, curr_angle, color):
         global map_vis, map_data
 
         xpos = np.cos(-curr_angle/180*np.pi)*dist/2 + xsize/2
@@ -53,7 +53,7 @@ class MapProcessing:
 
         try:
             map_data[round(xpos), round(ypos)] = 1
-            map_vis = cv2.circle(map_vis, (round(ypos), round(xpos)), 1, (0, 0, 0), 2)
+            map_vis = cv2.circle(map_vis, (round(ypos), round(xpos)), 1, color, 2)
         except IndexError as e:
             print(e)
 
@@ -128,7 +128,8 @@ if __name__ == "__main__":
 
     proc_instance.map_init()
     for (f, l, r, b, qual), deg in brum:
-        proc_instance.update_map(f, deg)
+        proc_instance.update_map(f, deg, (0, 0, 0))
+        proc_instance.update_map(b, deg+180, (0, 128, 128))
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
