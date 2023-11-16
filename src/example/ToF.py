@@ -6,13 +6,16 @@ tello.connect(False)
 
 
 def mesurments():
-    responses = tello.send_read_command('EXT tof?').split()
-    if len(responses) < 4:
+    try:
+        responses = tello.send_read_command('EXT tof?').split()
+        if len(responses) < 6:
+            return mesurments()
+        else:
+            return [int(responses[1]),int(responses[4]),int(responses[3]),int(responses[2]),int(responses[5])]
+    except Exception as e:
         return mesurments()
-    else:
-        return [int(responses[1]),int(responses[2]),int(responses[3])]
     
 
-#while True:
+while True:
     mesurments()
 
