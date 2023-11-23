@@ -23,8 +23,11 @@ color = (255, 0, 0)
 thickness = 2
 
 drone_last_pos = (0, 0)
-map_vis = np.full((1000, 1000, 3), 255, dtype='uint8')
-map_data = np.zeros((1000, 1000))
+
+MAP_WIDTH = 1000
+
+map_vis = np.full((MAP_WIDTH, MAP_WIDTH, 3), 255, dtype='uint8')
+map_data = np.zeros((MAP_WIDTH, MAP_WIDTH))
 
 xsize, ysize = map_data.shape
 
@@ -234,6 +237,8 @@ class MapProcessing:
         outer_width = 50
         inner_width = 35
 
+        room_opening_points = []
+
         for point in points:
             #start to iterate over pixels in circle-like structure
             line_sample = line_data[point[1] - sample_size:point[1] + sample_size, point[0] - sample_size:point[0] + sample_size]
@@ -251,6 +256,47 @@ class MapProcessing:
             if n_walls == 1:
                 #found opening!
                 cv2.circle(map_vis, point, 8, (255, 255, 0), -1)
+                room_opening_points.append(point)
+
+        return room_opening_points
+    
+    def find_openings(self, points):
+        nearest_objects = []
+        curr_max = MAP_WIDTH #maximum distance is the map width
+        point_i1 = 0
+        point_i2 = 0
+
+        for i, point in enumerate(points):
+            distances = []
+
+            points_copy = points.copy()
+            points_copy.pop(i)
+
+            for other_point in points_copy:
+                d_x = abs(point[0] - other_point[0])
+                d_y = abs(point[1] - other_point[1])
+
+                distances.append([round(math.sqrt(d_x ** 2 + d_y ** 2), 2), other_point[0], other_point[1]])
+
+            distances_np = np.array(distances)
+            nearest_object = distances_np[distances_np[:, 1].argsort()][0]
+            nearest_objects.append(nearest_object)
+
+        for i, object in enumerate(nearest_objects):
+            if curr_max > object[0]:
+                curr_max = object[0]
+                point_i1 = i
+
+        point1 = points[point_i1] #initial point
+        point2_np = nearest_objects[point_i1][1:]
+        
+        for i, point_eval in enumerate(points):
+            if point_eval[0] == point2_np[0] and point_eval[1] == point2_np[1]:
+                #getting the index if another point
+                point_i2 = i
+
+        point2 = points[point_i2] #second point, the nearest one
+
 
 
 if __name__ == "__main__":
@@ -266,7 +312,8 @@ if __name__ == "__main__":
     
     point_data, line_data = proc_instance.process_map(map_vis, map_data)
     clustered_points = proc_instance.cluster_DBSCAN(point_data)
-    proc_instance.get_room_openings(clustered_points, line_data)
+    opening_points = proc_instance.get_room_openings(clustered_points, line_data)
+    proc_instance.find_openings(opening_points)
 
 
     cv2.imshow("test", map_vis)
