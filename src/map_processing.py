@@ -98,7 +98,7 @@ class MapProcessing:
             points.append([x1, y1])
             points.append([x2, y2])
 
-        return points
+        return points, line_d
 
     def get_waypoints_kmeans_triangles(self, points):
         #categorize extremes into clusters (kmeans) and predict number of points using silhouette method
@@ -143,48 +143,7 @@ class MapProcessing:
         for point in representative_points:
             cv2.circle(map_vis, point, 8, (255, 0, 0), -1)
 
-        #transform representative points to dict
-        iterated_points = []
-
-        #process representative points to get triangles
-        centers = []
-
-        for i, point in enumerate(representative_points):
-            if i == len(representative_points) - 2:
-                break
-
-            distances = []
-            points_copy = representative_points.copy()
-            points_copy.pop(i)
-
-            for search_point in points_copy:
-                if search_point in iterated_points:
-                    continue
-
-                d_x = abs(point[0] - search_point[0])
-                d_y = abs(point[1] - search_point[1])
-
-                distances.append([round(math.sqrt(d_x ** 2 + d_y ** 2), 2), search_point[0], search_point[1]])
-
-            #sort distances by 
-            distances_np = np.array(distances)
-            distances_sorted = distances_np[distances_np[:, 1].argsort()]
-
-            #get two triangle points
-            a1 = distances_sorted[0][1:].astype(np.uint64)
-            a2 = distances_sorted[1][1:].astype(np.uint64)
-
-            centers.append([round((point[0]+a1[0]+a2[0])/3), round((point[1]+a1[1]+a2[1])/3)])
-
-            iterated_points.append(point)
-
-            cv2.circle(map_vis, centers[i], 8, (0, 0, 0), -1)
-
-            cv2.line(map_vis, point, a1, (0, 255, 0), 3) 
-            cv2.line(map_vis, a1, a2, (0, 255, 0), 3) 
-            cv2.line(map_vis, a2, point, (0, 255, 0), 3)
-
-        cv2.imshow("map", map_vis)
+        return representative_points
 
     def cluster_DBSCAN(self, points):
         #categorize extremes into clusters (kmeans) and predict number of points using silhouette method
@@ -218,6 +177,9 @@ class MapProcessing:
         for point in representative_points:
             cv2.circle(map_vis, point, 8, (255, 0, 0), -1)
 
+        cv2.imshow("DBSCAN", map_vis)
+        cv2.waitKey(0)
+
         return representative_points
 
     def get_waypoints_by_triangles(self, representative_points):
@@ -245,7 +207,7 @@ class MapProcessing:
 
                 distances.append([round(math.sqrt(d_x ** 2 + d_y ** 2), 2), search_point[0], search_point[1]])
 
-            #sort distances by 
+            #sort distances 
             distances_np = np.array(distances)
             distances_sorted = distances_np[distances_np[:, 1].argsort()]
 
@@ -267,6 +229,30 @@ class MapProcessing:
             cv2.imshow("test", map_vis)
             cv2.waitKey(0)
 
+    def get_room_openings(self, points, line_data):
+        sample_size = 50
+        outer_width = 50
+        inner_width = 35
+
+        for point in points:
+            #start to iterate over pixels in circle-like structure
+            line_sample = line_data[point[1] - sample_size:point[1] + sample_size, point[0] - sample_size:point[0] + sample_size]
+            point_sample = np.zeros(line_sample.shape, dtype=np.uint8)
+            cv2.circle(point_sample, (sample_size, sample_size), outer_width, (255, 255, 255), -1) #create outer circle for masking
+            cv2.circle(point_sample, (sample_size, sample_size), inner_width, (0, 0, 0), -1) #reate inner circle to later get different objects
+
+            #mask these so you can get openings
+            masked = cv2.bitwise_and(line_sample, point_sample)
+
+            #get contours so you can get number of walls
+            contours, hierarchy = cv2.findContours(masked, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+            n_walls = len(contours)
+            if n_walls == 1:
+                #found opening!
+                cv2.circle(map_vis, point, 8, (255, 255, 0), -1)
+
+
 if __name__ == "__main__":
     proc_instance = MapProcessing()
 
@@ -278,8 +264,15 @@ if __name__ == "__main__":
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     
-    point_data = proc_instance.process_map(map_vis, map_data)
+    point_data, line_data = proc_instance.process_map(map_vis, map_data)
     clustered_points = proc_instance.cluster_DBSCAN(point_data)
-    proc_instance.get_waypoints_by_triangles(clustered_points)
+    proc_instance.get_room_openings(clustered_points, line_data)
+
+
+    cv2.imshow("test", map_vis)
+    if cv2.waitKey(0) & 0xFF == ord('q'):
+        exit()
+
+    #proc_instance.get_waypoints_by_triangles(clustered_points)
         
 
