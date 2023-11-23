@@ -4,7 +4,7 @@ import math
 
 import cv2
 import numpy as np
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, DBSCAN
 from sklearn.neighbors import KDTree
 from sklearn.metrics import silhouette_score
 
@@ -102,7 +102,7 @@ class MapProcessing:
 
     def get_waypoints_kmeans_triangles(self, points):
         #categorize extremes into clusters (kmeans) and predict number of points using silhouette method
-        lim = len(points)
+        lim = round(len(points) / 8)
 
         scores = []
         for k in range(2, lim + 1):
@@ -185,10 +185,87 @@ class MapProcessing:
             cv2.line(map_vis, a2, point, (0, 255, 0), 3)
 
         cv2.imshow("map", map_vis)
-    
-    def get_waypoints_kdtree_triangles(self, points):
-        #get waypoints using kdtree
-        kdtree = KDTree(points)
+
+    def cluster_DBSCAN(self, points):
+        #categorize extremes into clusters (kmeans) and predict number of points using silhouette method
+        clustering = DBSCAN(eps=30, min_samples=5).fit(points)
+
+        labels = clustering.labels_
+        n_clusters = labels.max()
+
+        point_clusters = [ [] for _ in range(n_clusters + 1) ]
+        representative_points = []
+
+        for i, point in enumerate(points):
+            label = labels[i]
+
+            point_clusters[label].append(point)
+
+            #cv2.putText(map_vis, LABELS[label], (point[0], point[1]), font, fontScale, color, thickness, cv2.LINE_AA) 
+
+        #take median from all cluster values
+        for point_cluster in point_clusters:
+            cluster_np = np.array(point_cluster)
+
+            x_values = cluster_np[:, 0]
+            y_values = cluster_np[:, 1]
+
+            x_median = round(np.median(x_values))
+            y_median = round(np.median(y_values))
+
+            representative_points.append([x_median, y_median])
+
+        for point in representative_points:
+            cv2.circle(map_vis, point, 8, (255, 0, 0), -1)
+
+        return representative_points
+
+    def get_waypoints_by_triangles(self, representative_points):
+
+        #transform representative points to dict
+        iterated_points = []
+
+        #process representative points to get triangles
+        centers = []
+
+        for i, point in enumerate(representative_points):
+            if i == len(representative_points) - 2:
+                break
+
+            distances = []
+            points_copy = representative_points.copy()
+            points_copy.pop(i)
+
+            for search_point in points_copy:
+                if search_point in iterated_points:
+                    continue
+
+                d_x = abs(point[0] - search_point[0])
+                d_y = abs(point[1] - search_point[1])
+
+                distances.append([round(math.sqrt(d_x ** 2 + d_y ** 2), 2), search_point[0], search_point[1]])
+
+            #sort distances by 
+            distances_np = np.array(distances)
+            distances_sorted = distances_np[distances_np[:, 1].argsort()]
+
+            #get two triangle points
+            a1 = distances_sorted[0][1:].astype(np.uint64)
+            a2 = distances_sorted[1][1:].astype(np.uint64)
+
+            centers.append([round((point[0]+a1[0]+a2[0])/3), round((point[1]+a1[1]+a2[1])/3)])
+
+            iterated_points.append(point)
+
+            cv2.circle(map_vis, centers[i], 8, (0, 0, 0), -1)
+            cv2.circle(map_vis, point, 8, (255, 255, 0), -1)
+
+            cv2.line(map_vis, point, a1, (0, 255, 0), 3) 
+            cv2.line(map_vis, a1, a2, (0, 255, 0), 3) 
+            cv2.line(map_vis, a2, point, (0, 255, 0), 3)
+
+            cv2.imshow("test", map_vis)
+            cv2.waitKey(0)
 
 if __name__ == "__main__":
     proc_instance = MapProcessing()
@@ -202,9 +279,7 @@ if __name__ == "__main__":
             break
     
     point_data = proc_instance.process_map(map_vis, map_data)
-    #proc_instance.get_waypoints_kmeans_triangles(point_data)
-    proc_instance.get_waypoints_kdtree_triangles(point_data)
-    
-    while not cv2.waitKey(0) & 0xFF == ord('q'):
-        pass
+    clustered_points = proc_instance.cluster_DBSCAN(point_data)
+    proc_instance.get_waypoints_by_triangles(clustered_points)
+        
 
