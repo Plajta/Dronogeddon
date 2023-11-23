@@ -5,6 +5,7 @@ import math
 import cv2
 import numpy as np
 from sklearn.cluster import KMeans
+from sklearn.neighbors import KDTree
 from sklearn.metrics import silhouette_score
 
 LABELS = string.ascii_uppercase
@@ -185,12 +186,9 @@ class MapProcessing:
 
         cv2.imshow("map", map_vis)
     
-    def get_waypoints_kdtree_triangles():
+    def get_waypoints_kdtree_triangles(self, points):
         #get waypoints using kdtree
-        pass
-
-    
-
+        kdtree = KDTree(points)
 
 if __name__ == "__main__":
     proc_instance = MapProcessing()
@@ -204,7 +202,8 @@ if __name__ == "__main__":
             break
     
     point_data = proc_instance.process_map(map_vis, map_data)
-    proc_instance.get_waypoints(point_data)
+    #proc_instance.get_waypoints_kmeans_triangles(point_data)
+    proc_instance.get_waypoints_kdtree_triangles(point_data)
     
     while not cv2.waitKey(0) & 0xFF == ord('q'):
         pass

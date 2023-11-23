@@ -75,8 +75,8 @@ class DoorsDataset(Dataset):
             elif int(y[0]) == 1:
                 self.half_opened += 1
             elif int(y[0]) == 2:
-                self.fully_opened += 2
-    
+                self.fully_opened += 1
+
     def __getitem__(self, index):
 
         arr_labels = os.listdir(self.path_labels)
@@ -265,8 +265,8 @@ def inspect_dataset(index, dataloader):
 #valid_data = DoorsDataset("valid")
 
 #to train on better data
-train_data = DoorsDataset("test")
-test_data = DoorsDataset("valid")
+train_data = DoorsDataset("train")
+test_data = DoorsDataset("test")
 valid_data = DoorsDataset("valid")
 
 #train_data = TestDoorsData("test")
@@ -274,11 +274,11 @@ valid_data = DoorsDataset("valid")
 #valid_data = TestDoorsData("valid")
 
 print("train")
-#train_data.__print_statistics__()
+train_data.__print_statistics__()
 print("test")
-#test_data.__print_statistics__()
+test_data.__print_statistics__()
 print("valid")
-#valid_data.__print_statistics__()
+valid_data.__print_statistics__()
 
 train = DataLoader(train_data, batch_size=batch_size, shuffle=True)
 test = DataLoader(test_data, batch_size=batch_size, shuffle=False)

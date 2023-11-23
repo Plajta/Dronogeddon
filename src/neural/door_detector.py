@@ -49,6 +49,7 @@ def model_inference(path, type):
     #inference on notebook camera
 
     model = torch.load(os.getcwd() + "/src/neural/saved_models/" + path)
+    model.eval()
 
 
     if type == "camera":
@@ -59,6 +60,8 @@ def model_inference(path, type):
             transposed_array = frame.transpose((2, 1, 0))
             tensor = torch.tensor(transposed_array).unsqueeze(0).to(torch.float32).to(DEVICE)
             out = model(tensor)
+
+            print(out)
 
             out_bbox = out[0]
             out_cls = out[1]
@@ -111,6 +114,7 @@ def model_inference(path, type):
 
             tensor = torch.tensor(frame).unsqueeze(0).to(torch.float32).to(DEVICE)
             out = model(tensor)
+            print(out)
 
             out_bbox = out[0]
             out_cls = out[1]
@@ -146,5 +150,5 @@ def model_inference(path, type):
 
             cv2.waitKey(0)
 
-run_models(False, 2)
-#model_inference("05.pth", "local")
+#run_models(False, 2)
+model_inference("05.pth", "local")
