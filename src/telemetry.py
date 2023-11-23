@@ -16,7 +16,6 @@ class TelemetryScanner(threading.Thread,):
             # Logic for scanning the area and updating distance data
             distance_data = self.mesurments()
             self.drone_controller.set_distance_data(distance_data)
-            print("tel run")
             time.sleep(0.1)
 
     def mesurments(self):
