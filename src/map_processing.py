@@ -343,11 +343,16 @@ class MapProcessing:
 
         print(points_without_opening)
 
+class Graph:
+    def __init__(self, points, dest_points):
+        pass
+        
+
 class Astar:
     def __init__(self):
         pass
 
-    def process_points(self, points, dest_points):
+    def process_points(self, graph):
         pass
 
 if __name__ == "__main__":
@@ -370,7 +375,8 @@ if __name__ == "__main__":
     waypoints = proc_instance.get_waypoints_by_triangles(clustered_points)
 
     #now to path construction
-    Astar.process_points(waypoints, opening)
+    directed_graph = Graph(waypoints, opening)
+    algorithm.process_points(directed_graph)
 
     #proc_instance.construct_path(opening, clustered_points)
 
