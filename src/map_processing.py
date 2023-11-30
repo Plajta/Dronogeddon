@@ -185,7 +185,7 @@ class MapProcessing:
 
         return representative_points
 
-    def get_waypoints_by_triangles(self, representative_points):
+    def get_waypoints_by_decreasing_triangles(self, representative_points):
 
         #transform representative points to dict
         iterated_points = []
@@ -232,6 +232,53 @@ class MapProcessing:
             cv2.imshow("test", map_vis)
             cv2.waitKey(0)
 
+    def get_waypoints_by_triangles(self, representative_points):
+        centers = []
+        
+        for i, point in enumerate(representative_points):
+            if i == len(representative_points) - 2:
+                break
+
+            distances = []
+            points_copy = representative_points.copy()
+            for i2 in range(i):
+                points_copy.pop(0)
+
+            for search_point in points_copy:
+                d_x = abs(point[0] - search_point[0])
+                d_y = abs(point[1] - search_point[1])
+
+                distances.append([round(math.sqrt(d_x ** 2 + d_y ** 2), 2), search_point[0], search_point[1]])
+                
+            #sort distances 
+            distances_np = np.array(distances)
+            distances_sorted = distances_np[distances_np[:, 1].argsort()]
+
+            #get two triangle points
+            for i, dist1 in enumerate(distances_sorted):
+                distances_sorted2 = np.delete(distances_sorted, (i), axis=0)
+                for dist2 in distances_sorted2:
+                
+                    a1 = dist1[1:].astype(np.uint64)
+                    a2 = dist2[1:].astype(np.uint64)
+
+                    center = [round((point[0]+a1[0]+a2[0])/3), round((point[1]+a1[1]+a2[1])/3)]
+                    centers.append(center)
+
+                    cv2.circle(map_vis, point, 8, (255, 255, 0), -1)
+
+                    cv2.line(map_vis, point, a1, (0, 255, 0), 3) 
+                    cv2.line(map_vis, a1, a2, (0, 255, 0), 3) 
+                    cv2.line(map_vis, a2, point, (0, 255, 0), 3)
+
+
+        for center in centers:
+            cv2.circle(map_vis, center, 8, (0, 0, 0), -1)
+        cv2.imshow("test", map_vis)
+        cv2.waitKey(0)
+
+        print(len(centers))
+
     def get_room_openings(self, points, line_data):
         sample_size = 50
         outer_width = 50
@@ -255,48 +302,45 @@ class MapProcessing:
             n_walls = len(contours)
             if n_walls == 1:
                 #found opening!
-                cv2.circle(map_vis, point, 8, (255, 255, 0), -1)
                 room_opening_points.append(point)
 
         return room_opening_points
     
-    def find_openings(self, points):
-        nearest_objects = []
-        curr_max = MAP_WIDTH #maximum distance is the map width
-        point_i1 = 0
-        point_i2 = 0
-
+    def find_openings_using_lowest_distance(self, points):
+        distances = []
         for i, point in enumerate(points):
-            distances = []
-
             points_copy = points.copy()
             points_copy.pop(i)
 
-            for other_point in points_copy:
-                d_x = abs(point[0] - other_point[0])
-                d_y = abs(point[1] - other_point[1])
+            for point_copy in points_copy:
+                c = round(math.sqrt(abs(point[0] - point_copy[0])**2 + abs(point[1] - point_copy[1])**2), 2)
+                distances.append([c, point, point_copy])
 
-                distances.append([round(math.sqrt(d_x ** 2 + d_y ** 2), 2), other_point[0], other_point[1]])
+        min_num = 0
+        curr_i = 0
+        for i, dist in enumerate(distances):
+            if i == 0:
+                min_num = dist[0]
 
-            distances_np = np.array(distances)
-            nearest_object = distances_np[distances_np[:, 1].argsort()][0]
-            nearest_objects.append(nearest_object)
+            if dist[0] <= min_num:
+                curr_i = i
 
-        for i, object in enumerate(nearest_objects):
-            if curr_max > object[0]:
-                curr_max = object[0]
-                point_i1 = i
-
-        point1 = points[point_i1] #initial point
-        point2_np = nearest_objects[point_i1][1:]
+        return distances[curr_i][1:]
+    
+    def construct_path(self, opening_points, points):
+        path_map = np.full((MAP_WIDTH, MAP_WIDTH), 255, dtype=np.uint8)
         
-        for i, point_eval in enumerate(points):
-            if point_eval[0] == point2_np[0] and point_eval[1] == point2_np[1]:
-                #getting the index if another point
-                point_i2 = i
+        points_without_opening = []
+        for point in points:
+            found_point = False
+            for opening_point in opening_points:
+                if opening_point[0] == point[0] and opening_point[1] == point[1]:
+                    found_point = True
+            
+            if not found_point:
+                points_without_opening.append(point)
 
-        point2 = points[point_i2] #second point, the nearest one
-
+        print(points_without_opening)
 
 
 if __name__ == "__main__":
@@ -313,7 +357,16 @@ if __name__ == "__main__":
     point_data, line_data = proc_instance.process_map(map_vis, map_data)
     clustered_points = proc_instance.cluster_DBSCAN(point_data)
     opening_points = proc_instance.get_room_openings(clustered_points, line_data)
-    proc_instance.find_openings(opening_points)
+    opening = proc_instance.find_openings_using_lowest_distance(opening_points)
+    
+    proc_instance.get_waypoints_by_triangles(clustered_points)
+    #proc_instance.get_waypoints_by_decreasing_triangles(clustered_points)
+
+    #now to path construction
+    #proc_instance.construct_path(opening, clustered_points)
+
+    for point in opening:
+        cv2.circle(map_vis, point, 8, (125, 125, 0), -1)
 
 
     cv2.imshow("test", map_vis)

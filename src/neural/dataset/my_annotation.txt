@@ -1,3 +1,0 @@
-door_states =>  0 - closed
-                1 - half open
-                2 - fully open
