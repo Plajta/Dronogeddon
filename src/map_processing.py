@@ -274,10 +274,11 @@ class MapProcessing:
 
         for center in centers:
             cv2.circle(map_vis, center, 8, (0, 0, 0), -1)
+
         cv2.imshow("test", map_vis)
         cv2.waitKey(0)
 
-        print(len(centers))
+        return centers
 
     def get_room_openings(self, points, line_data):
         sample_size = 50
@@ -342,9 +343,16 @@ class MapProcessing:
 
         print(points_without_opening)
 
+class Astar:
+    def __init__(self):
+        pass
+
+    def process_points(self, points, dest_points):
+        pass
 
 if __name__ == "__main__":
     proc_instance = MapProcessing()
+    algorithm = Astar()
 
     proc_instance.map_init()
     for (f, l, r, b, qual), deg in brum:
@@ -359,10 +367,11 @@ if __name__ == "__main__":
     opening_points = proc_instance.get_room_openings(clustered_points, line_data)
     opening = proc_instance.find_openings_using_lowest_distance(opening_points)
     
-    proc_instance.get_waypoints_by_triangles(clustered_points)
-    #proc_instance.get_waypoints_by_decreasing_triangles(clustered_points)
+    waypoints = proc_instance.get_waypoints_by_triangles(clustered_points)
 
     #now to path construction
+    Astar.process_points(waypoints, opening)
+
     #proc_instance.construct_path(opening, clustered_points)
 
     for point in opening:
