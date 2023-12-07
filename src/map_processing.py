@@ -232,8 +232,9 @@ class MapProcessing:
             cv2.imshow("test", map_vis)
             cv2.waitKey(0)
 
-    def get_waypoints_by_triangles(self, representative_points):
+    def get_waypoints_by_triangles(self, representative_points, line_map):
         centers = []
+        MINIMAL_WALL_DISTANCE = 20
         
         for i, point in enumerate(representative_points):
             if i == len(representative_points) - 2:
@@ -271,12 +272,20 @@ class MapProcessing:
                     cv2.line(map_vis, a1, a2, (0, 255, 0), 3) 
                     cv2.line(map_vis, a2, point, (0, 255, 0), 3)
 
+        #get rid of points overlapping points
+        true_centers = []
+        for center in centers:
+            if line_map[center[1], center[0]] != 255:
+                true_centers.append(center)
+
+        centers = []
+        for center in true_centers:
+            n_white_pix = np.sum(line_data[center[1]-MINIMAL_WALL_DISTANCE:center[1]+MINIMAL_WALL_DISTANCE, center[0]-MINIMAL_WALL_DISTANCE:center[0]+MINIMAL_WALL_DISTANCE] == 255)
+            if n_white_pix <= 0:
+                centers.append(center)
 
         for center in centers:
             cv2.circle(map_vis, center, 8, (0, 0, 0), -1)
-
-        cv2.imshow("test", map_vis)
-        cv2.waitKey(0)
 
         return centers
 
@@ -345,7 +354,11 @@ class MapProcessing:
 
 class Graph:
     def __init__(self, points, dest_points):
-        pass
+        for i, point in enumerate(points):
+            points_copy = points.copy()
+            points_copy.pop(i)
+
+            
         
 
 class Astar:
@@ -372,7 +385,7 @@ if __name__ == "__main__":
     opening_points = proc_instance.get_room_openings(clustered_points, line_data)
     opening = proc_instance.find_openings_using_lowest_distance(opening_points)
     
-    waypoints = proc_instance.get_waypoints_by_triangles(clustered_points)
+    waypoints = proc_instance.get_waypoints_by_triangles(clustered_points, line_data)
 
     #now to path construction
     directed_graph = Graph(waypoints, opening)
