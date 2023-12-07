@@ -101,7 +101,7 @@ class MapProcessing:
             points.append([x1, y1])
             points.append([x2, y2])
 
-        return points, line_d
+        return points, line_d, linesP
 
     def get_waypoints_kmeans_triangles(self, points):
         #categorize extremes into clusters (kmeans) and predict number of points using silhouette method
@@ -353,13 +353,16 @@ class MapProcessing:
         print(points_without_opening)
 
 class Graph:
-    def __init__(self, points, dest_points):
-        for i, point in enumerate(points):
-            points_copy = points.copy()
-            points_copy.pop(i)
+    def __init__(self, points, dest_points, line_data):
+        self.VERTICAL_PASS_COEF = 2
+        self.MIN_POINT_DIST = 30
 
-            
-        
+        self.path_array = []
+
+        for i, point in enumerate(points):
+            points.pop(i)
+            for point2 in points:
+                pass
 
 class Astar:
     def __init__(self):
@@ -380,7 +383,7 @@ if __name__ == "__main__":
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     
-    point_data, line_data = proc_instance.process_map(map_vis, map_data)
+    point_data, line_data, lines = proc_instance.process_map(map_vis, map_data)
     clustered_points = proc_instance.cluster_DBSCAN(point_data)
     opening_points = proc_instance.get_room_openings(clustered_points, line_data)
     opening = proc_instance.find_openings_using_lowest_distance(opening_points)
@@ -388,7 +391,7 @@ if __name__ == "__main__":
     waypoints = proc_instance.get_waypoints_by_triangles(clustered_points, line_data)
 
     #now to path construction
-    directed_graph = Graph(waypoints, opening)
+    directed_graph = Graph(waypoints, opening, lines)
     algorithm.process_points(directed_graph)
 
     #proc_instance.construct_path(opening, clustered_points)
