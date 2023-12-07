@@ -8,7 +8,7 @@ tello.connect(False)
 
 class DroneController:
     def __init__(self):
-        self.distance_data = [0,0,0]
+        self.distance_data = [0,0,0,0,0,0]
         self.lock = threading.Lock()
         self.telloLock = threading.Lock()
         self.stop_program = False
