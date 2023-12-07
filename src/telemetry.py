@@ -25,7 +25,7 @@ class TelemetryScanner(threading.Thread,):
                 if len(responses) < 6:
                     return self.mesurments()
                 else:
-                    return [int(responses[1]),int(responses[4]),int(responses[3]),int(responses[2]),int(responses[5])]
+                    return [int(responses[1]),int(responses[4]),int(responses[3]),int(responses[2]),int(responses[5]),tello.get_yaw()+180]
             except Exception as e:
                 return self.mesurments()
             pass
@@ -33,3 +33,6 @@ class TelemetryScanner(threading.Thread,):
 
     def stop(self):
         self.stop_scanning.set()
+
+if __name__ == "__main__":
+    tello.send_read_command('EXT tof?')
