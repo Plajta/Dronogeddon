@@ -92,9 +92,6 @@ class FlightController():
         print(distance)
 
     def rotationTo(self,end):
-
-        
-
         tello.send_rc_control(0,0,0,0)
         deg = self.drone_controller.get_distance_data()[5]
         end = end%360
@@ -121,48 +118,43 @@ class FlightController():
         
         
         if abs(in_distance) < abs(out_distance):
-            neg = True
             if in_distance > 0: 
                 print(f"right by {abs(in_distance)}")
-                speed = 30
+                speed = 50
             else:
                 print(f"left by {abs(in_distance)}")
-                speed = -30
+                speed = -50
             by = in_distance
         else:
-            neg = False
             if out_distance < 0:
                 print(f"left by {abs(out_distance)}")
-                speed = -30
+                speed = -50
             else:
                 print(f"right by {abs(out_distance)}")
-                speed = 30
+                speed = 50
             by = out_distance
 
         print("speed: ",speed)
-        print(neg)
         print("rot")
-        self.rotate(speed,end,neg,deg,speed < 0,shift)
+        self.rotate(speed,end,deg,speed < 0,shift)
         
 
     def rotationBy(self):
         pass
 
-    def rotate(self,speed,end,neg,deg,direction,shift):
+    def rotate(self,speed,end,deg,direction,shift):
         time.sleep(0.1)
         tello.send_rc_control(0,0,0,speed)
         time.sleep(0.1)
 
-        print(speed,end,neg,deg,direction)
+        print(speed,end,deg,direction)
         
-        while not(neg and (deg >= end) ^ direction):
-            print(f"deg: {deg} to tgD: {abs(deg-end)} neg: {neg} deg >= start: {(deg >= end) ^ direction} all: {(neg and (deg >= end) ^ direction)}")
-            if not(neg):
-                neg = (deg < end) ^ direction
+        while not((deg >= end) ^ direction):
 
-            deg = (self.drone_controller.get_distance_data()[5]+shift)%360
+            deg = (self.drone_controller.get_distance_data()[5])
             time.sleep(0.1)
-            
+            print(f"deg: {deg} deg-shift: {(deg + shift)%360} to tgD: {abs((deg+shift)%360-end)}  deg >= start: {(deg >= end) ^ direction} all: {((deg >= end) ^ direction)}")
+            deg = (deg + shift)%360
 
         tello.send_rc_control(0,0,0,0)
         
@@ -190,41 +182,50 @@ class FlightController():
 
 
     def flight_program(self):
-        with self.drone_controller.telloLock:
-            tello.takeoff()
-
-        print(self.drone_controller.get_distance_data())
-        time.sleep(2)
-        # print("start translation")
-        # self.translation("F",300)
-        # print("end translation")
-
-        by = 179
-        deg = self.drone_controller.get_distance_data()[5]
-        print(f"deg = {deg} rotating to {(deg+by)%360}")
-        self.rotationTo(deg+by)
-        time.sleep(2)
-        print("done\n\n\n\n\n\n")
-        deg = self.drone_controller.get_distance_data()[5]
-        print(f"deg = {deg} rotating to {(deg+by)%360}")
-        self.rotationTo(deg+by)
-        print("done\n\n\n\n\n\n")
-        by = -179
-        deg = self.drone_controller.get_distance_data()[5]
-        print(f"deg = {deg} rotating to {(deg+by)%360}")
-        self.rotationTo(deg+by)
-        print("done\n\n\n\n\n\n")
-        deg = self.drone_controller.get_distance_data()[5]
-        print(f"deg = {deg} rotating to {(deg+by)%360}")
-        self.rotationTo(deg+by)
-
-        #self.kruh()
-
+        takeoff = True
 
         with self.drone_controller.telloLock:
-            tello.land()
+            try:
+                tello.takeoff()
+            except:
+                takeoff = False
+                print("\n\n--------------------------------------")
+                print("takeoff not posible, check the batery")
+                print("--------------------------------------\n\n")
 
-        print("end")
-        print(self.drone_controller.get_distance_data()[5])
+        if takeoff:
+            print(self.drone_controller.get_distance_data())
+            time.sleep(2)
+            # print("start translation")
+            # self.translation("F",300)
+            # print("end translation")
+
+            by = 90
+            deg = self.drone_controller.get_distance_data()[5]
+            print(f"deg = {deg} rotating to {(deg+by)%360}")
+            self.rotationTo(deg+by)
+            time.sleep(2)
+            print("done\n\n\n\n\n\n")
+            deg = self.drone_controller.get_distance_data()[5]
+            print(f"deg = {deg} rotating to {(deg+by)%360}")
+            self.rotationTo(deg+by)
+            print("done\n\n\n\n\n\n")
+            by = -90
+            deg = self.drone_controller.get_distance_data()[5]
+            print(f"deg = {deg} rotating to {(deg+by)%360}")
+            self.rotationTo(deg+by)
+            print("done\n\n\n\n\n\n")
+            deg = self.drone_controller.get_distance_data()[5]
+            print(f"deg = {deg} rotating to {(deg+by)%360}")
+            self.rotationTo(deg+by)
+
+            #self.kruh()
+
+
+            with self.drone_controller.telloLock:
+                tello.land()
+
+            print("end")
+            print(self.drone_controller.get_distance_data()[5])
 
     
