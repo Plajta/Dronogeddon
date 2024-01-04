@@ -336,15 +336,65 @@ class MapProcessing:
 
         return distances[curr_i][1:]
 
+class Point:
+    def __init__(self):
+        pass
+
 class Graph:
+    def __init__(self, points, dest_points, drone_pos, lines):
+        self.VERTICAL_PASS_COEF = 2
+        self.MIN_POINT_DIST = 30
+
+        self.path_array = []
+        self.points_labeled = {}
+
+        self.start_point = drone_pos
+        self.end_point = [round((dest_points[0][0] + dest_points[1][0])/2), round((dest_points[0][1] + dest_points[1][1])/2)]
+        
+        #assign id to every point
+        for point in points:
+            pass
+
+        points_copy = points.copy()
+        while True:
+            if len(points_copy) == 0:
+                break
+
+            point = points_copy[0]
+            points_copy.pop(0)
+            for point2 in points:
+                collision = False
+
+                #iterate on every line to check colision
+                for line in lines:
+                    point_path = [point, point2]
+                    line_path = [line[0][:2].tolist(), line[0][2:].tolist()]
+
+                    collision = self.__check_for_collision__(point_path, line_path)
+
+                if not collision:
+                    #did not collide!
+                    pass
 
     def __check_segment__(self, p, q, r):
-        pass
+        if ( (q[0] <= max(p[0], r[0])) and (q[0] >= min(p[0], r[0])) and 
+            (q[1] <= max(p[1], r[1])) and (q[1] >= min(p[1], r[1]))): 
+            return True
+        return False
 
     def __check_orientation__(self, p, q, r):
-        pass
+        val = (float(q[1] - p[1]) * (r[0] - q[0])) - (float(q[0] - p[0]) * (r[1] - q[1])) 
+        if (val > 0):   
+            # Clockwise orientation 
+            return 1
+        elif (val < 0): 
+            # Counterclockwise orientation 
+            return 2
+        else: 
+            # Collinear orientation 
+            return 0
 
-    def __check_for_colisions__(self, line_1, line_2):
+    def __check_for_collision__(self, line_1, line_2):
         o1 = self.__check_orientation__(line_1[0], line_1[1], line_2[0]) 
         o2 = self.__check_orientation__(line_1[0], line_1[1], line_2[1]) 
         o3 = self.__check_orientation__(line_2[0], line_2[1], line_1[0]) 
@@ -374,34 +424,6 @@ class Graph:
     
         # If none of the cases 
         return False
-
-    def __init__(self, points, dest_points, drone_pos, lines):
-        self.VERTICAL_PASS_COEF = 2
-        self.MIN_POINT_DIST = 30
-
-        self.path_array = []
-
-        self.start_point = drone_pos
-        self.end_point = [round((dest_points[0][0] + dest_points[1][0])/2), round((dest_points[0][1] + dest_points[1][1])/2)]
-        
-        points_copy = points.copy()
-        while True:
-            if len(points_copy) == 0:
-                break
-
-            point = points_copy[0]
-            points_copy.pop(0)
-            for point2 in points:
-                
-                #iterate on every line to check colision
-                for line in lines:
-                    point_path = [point, point2]
-                    line_path = [line[0][:2].tolist(), line[0][2:].tolist()]
-                    self.__check_for_colisions__(point_path, line_path)
-
-                    exit(0)
-
-
 
 class Astar:
     def __init__(self):
