@@ -36,3 +36,6 @@ sender.yml
 #temp files
 /src/neural/__pycache__
 /wandb/
+
+#tests
+/src/test

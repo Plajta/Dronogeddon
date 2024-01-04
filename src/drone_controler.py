@@ -1,5 +1,4 @@
 import threading
-import time
 from djitellopy import Tello
 import video as vid
 
