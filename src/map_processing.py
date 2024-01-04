@@ -337,8 +337,10 @@ class MapProcessing:
         return distances[curr_i][1:]
 
 class Point:
-    def __init__(self):
-        pass
+    def __init__(self, coords, id):
+        self.coords = coords
+        self.id = id
+        self.leading_to = []
 
 class Graph:
     def __init__(self, points, dest_points, drone_pos, lines):
@@ -346,14 +348,16 @@ class Graph:
         self.MIN_POINT_DIST = 30
 
         self.path_array = []
-        self.points_labeled = {}
+        self.points_labeled = []
 
         self.start_point = drone_pos
         self.end_point = [round((dest_points[0][0] + dest_points[1][0])/2), round((dest_points[0][1] + dest_points[1][1])/2)]
         
         #assign id to every point
+        id = 0
         for point in points:
-            pass
+            self.points_labeled.append(Point(point, id))
+            id += 1
 
         points_copy = points.copy()
         while True:
