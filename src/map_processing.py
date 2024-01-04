@@ -22,9 +22,8 @@ color = (255, 0, 0)
 # Line thickness of 2 px 
 thickness = 2
 
-drone_last_pos = (0, 0)
-
 MAP_WIDTH = 1000
+drone_last_pos = (round(MAP_WIDTH / 2), round(MAP_WIDTH / 2)) #TODO pak změň - teď je to default
 
 map_vis = np.full((MAP_WIDTH, MAP_WIDTH, 3), 255, dtype='uint8')
 map_data = np.zeros((MAP_WIDTH, MAP_WIDTH))
@@ -336,33 +335,73 @@ class MapProcessing:
                 curr_i = i
 
         return distances[curr_i][1:]
-    
-    def construct_path(self, opening_points, points):
-        path_map = np.full((MAP_WIDTH, MAP_WIDTH), 255, dtype=np.uint8)
-        
-        points_without_opening = []
-        for point in points:
-            found_point = False
-            for opening_point in opening_points:
-                if opening_point[0] == point[0] and opening_point[1] == point[1]:
-                    found_point = True
-            
-            if not found_point:
-                points_without_opening.append(point)
-
-        print(points_without_opening)
 
 class Graph:
-    def __init__(self, points, dest_points, line_data):
+
+    def __check_segment__(self, p, q, r):
+        pass
+
+    def __check_orientation__(self, p, q, r):
+        pass
+
+    def __check_for_colisions__(self, line_1, line_2):
+        o1 = self.__check_orientation__(line_1[0], line_1[1], line_2[0]) 
+        o2 = self.__check_orientation__(line_1[0], line_1[1], line_2[1]) 
+        o3 = self.__check_orientation__(line_2[0], line_2[1], line_1[0]) 
+        o4 = self.__check_orientation__(line_2[0], line_2[1], line_1[1]) 
+    
+        # General case 
+        if ((o1 != o2) and (o3 != o4)): 
+            return True
+    
+        # Special Cases 
+    
+        # p1 , q1 and p2 are collinear and p2 lies on segment p1q1 
+        if ((o1 == 0) and self.__check_segment__(line_1[0], line_2[0], line_1[1])): 
+            return True
+    
+        # p1 , q1 and q2 are collinear and q2 lies on segment p1q1 
+        if ((o2 == 0) and self.__check_segment__(line_1[0], line_2[1], line_1[1])): 
+            return True
+    
+        # p2 , q2 and p1 are collinear and p1 lies on segment p2q2 
+        if ((o3 == 0) and self.__check_segment__(line_2[0], line_1[0], line_2[1])): 
+            return True
+    
+        # p2 , q2 and q1 are collinear and q1 lies on segment p2q2 
+        if ((o4 == 0) and self.__check_segment__(line_2[0], line_1[1], line_2[1])): 
+            return True
+    
+        # If none of the cases 
+        return False
+
+    def __init__(self, points, dest_points, drone_pos, lines):
         self.VERTICAL_PASS_COEF = 2
         self.MIN_POINT_DIST = 30
 
         self.path_array = []
 
-        for i, point in enumerate(points):
-            points.pop(i)
+        self.start_point = drone_pos
+        self.end_point = [round((dest_points[0][0] + dest_points[1][0])/2), round((dest_points[0][1] + dest_points[1][1])/2)]
+        
+        points_copy = points.copy()
+        while True:
+            if len(points_copy) == 0:
+                break
+
+            point = points_copy[0]
+            points_copy.pop(0)
             for point2 in points:
-                pass
+                
+                #iterate on every line to check colision
+                for line in lines:
+                    point_path = [point, point2]
+                    line_path = [line[0][:2].tolist(), line[0][2:].tolist()]
+                    self.__check_for_colisions__(point_path, line_path)
+
+                    exit(0)
+
+
 
 class Astar:
     def __init__(self):
@@ -374,6 +413,7 @@ class Astar:
 if __name__ == "__main__":
     proc_instance = MapProcessing()
     algorithm = Astar()
+    
 
     proc_instance.map_init()
     for (f, l, r, b, qual), deg in brum:
@@ -391,7 +431,7 @@ if __name__ == "__main__":
     waypoints = proc_instance.get_waypoints_by_triangles(clustered_points, line_data)
 
     #now to path construction
-    directed_graph = Graph(waypoints, opening, lines)
+    directed_graph = Graph(waypoints, opening, drone_last_pos, lines)
     algorithm.process_points(directed_graph)
 
     #proc_instance.construct_path(opening, clustered_points)
@@ -402,8 +442,5 @@ if __name__ == "__main__":
 
     cv2.imshow("test", map_vis)
     if cv2.waitKey(0) & 0xFF == ord('q'):
-        exit()
-
-    #proc_instance.get_waypoints_by_triangles(clustered_points)
-        
+        exit()        
 
