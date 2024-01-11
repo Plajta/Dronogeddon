@@ -459,13 +459,6 @@ class Graph:
         cv2.imshow("test", plot_img)
         cv2.waitKey(0)
 
-class Astar:
-    def __init__(self):
-        pass
-
-    def process_points(self, graph):
-        pass
-
 if __name__ == "__main__":
     proc_instance = MapProcessing()
     algorithm = Astar()
