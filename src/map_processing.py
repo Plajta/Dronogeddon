@@ -335,11 +335,17 @@ class MapProcessing:
                 curr_i = i
 
         return distances[curr_i][1:]
+    
+    def filter_points(self, points):
+        #to filter out all points that are duplicit
+        pass
 
 class Point:
     def __init__(self, coords, id):
         self.coords = coords
         self.id = id
+
+        #going to put some of the leading points here
         self.leading_to = []
 
 class Graph:
@@ -366,19 +372,33 @@ class Graph:
 
             point = points_copy[0]
             points_copy.pop(0)
-            for point2 in points:
+            for point2 in points_copy:
                 collision = False
+                point_path = [point, point2]
 
                 #iterate on every line to check colision
                 for line in lines:
-                    point_path = [point, point2]
                     line_path = [line[0][:2].tolist(), line[0][2:].tolist()]
 
                     collision = self.__check_for_collision__(point_path, line_path)
+                    if collision:
+                        #did collide together
+                        break
 
                 if not collision:
                     #did not collide!
-                    pass
+                    
+                    #search all the points and assign them leading to points
+
+                    #
+                    #This is the ugliest piece of code I have ever written in my programming history, I am deeply sorry for all my colleagues that actually have to see this big pile of non-optimised code
+                    #TODO get rid of this 6-for-loop situation
+
+                    for dest_point in self.points_labeled:
+                        if dest_point.coords[0] == point[0] and dest_point.coords[1] == point[1]:
+                            for dest_point2 in self.points_labeled:
+                                if dest_point2.coords[0] == point2[0] and dest_point2.coords[1] == point2[1]:
+                                    dest_point.leading_to.append(dest_point2.id)
 
     def __check_segment__(self, p, q, r):
         if ( (q[0] <= max(p[0], r[0])) and (q[0] >= min(p[0], r[0])) and 
@@ -428,6 +448,16 @@ class Graph:
     
         # If none of the cases 
         return False
+    
+    def test_plot(self):
+        plot_img = np.full((MAP_WIDTH, MAP_WIDTH, 3), 255, dtype='uint8')
+
+        for point in self.points_labeled:
+            cv2.circle(plot_img, point.coords, 8, (125, 125, 0), -1)
+            cv2.putText(plot_img, str(point.id), [point.coords[0] + 5, point.coords[1] - 5], font, fontScale, (255, 0, 0), 1, cv2.LINE_AA) 
+
+        cv2.imshow("test", plot_img)
+        cv2.waitKey(0)
 
 class Astar:
     def __init__(self):
@@ -458,6 +488,7 @@ if __name__ == "__main__":
 
     #now to path construction
     directed_graph = Graph(waypoints, opening, drone_last_pos, lines)
+    #directed_graph.test_plot()
     algorithm.process_points(directed_graph)
 
     #proc_instance.construct_path(opening, clustered_points)
