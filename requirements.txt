@@ -7,5 +7,6 @@ customtkinter
 torchvision
 torch
 seaborn
+astar
 
 #NOTE: dont use this on conda builds!
