@@ -362,19 +362,24 @@ class Graph:
         self.path_array = []
         self.points_labeled = []
 
-        start_point = drone_pos
-        end_point = [round((dest_points[0][0] + dest_points[1][0])/2), round((dest_points[0][1] + dest_points[1][1])/2)]
+        start_point_coord = drone_pos
+        end_point_coord = [round((dest_points[0][0] + dest_points[1][0])/2), round((dest_points[0][1] + dest_points[1][1])/2)]
         
-        points.append(start_point)
-        points.append(end_point)
+        #self.start_point = Point(start_point_coord, 0)
+        #self.end_point = Point(end_point_coord, 1)
+
+        self.all_points = []
+        self.all_points.extend(points)
+        self.all_points.append(start_point_coord)
+        self.all_points.append(end_point_coord)
 
         #assign id to every point
         id = 0
-        for point in points:
+        for point in self.all_points:
             self.points_labeled.append(Point(point, id))
             id += 1
 
-        points_copy = points.copy()
+        points_copy = self.all_points.copy()
         while True:
             if len(points_copy) == 0:
                 break
@@ -407,8 +412,12 @@ class Graph:
                         if dest_point.coords[0] == point[0] and dest_point.coords[1] == point[1]:
                             for dest_point2 in self.points_labeled:
                                 if dest_point2.coords[0] == point2[0] and dest_point2.coords[1] == point2[1]:
-                                    dest_point.leading_to.append(dest_point2.id)
+                                    dest_point.leading_to.append(dest_point2)
+        
+        self.start_point = self.points_labeled[len(self.points_labeled) - 1]
+        self.end_point = self.points_labeled[len(self.points_labeled) - 2]
 
+        
     def __check_segment__(self, p, q, r):
         if ( (q[0] <= max(p[0], r[0])) and (q[0] >= min(p[0], r[0])) and 
             (q[1] <= max(p[1], r[1])) and (q[1] >= min(p[1], r[1]))): 
