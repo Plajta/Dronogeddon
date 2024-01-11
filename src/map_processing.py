@@ -338,7 +338,13 @@ class MapProcessing:
     
     def filter_points(self, points):
         #to filter out all points that are duplicit
-        pass
+
+        filtered_points = []
+        for point in points:
+            if point not in filtered_points:
+                filtered_points.append(point)
+        
+        return filtered_points
 
 class Point:
     def __init__(self, coords, id):
@@ -356,9 +362,12 @@ class Graph:
         self.path_array = []
         self.points_labeled = []
 
-        self.start_point = drone_pos
-        self.end_point = [round((dest_points[0][0] + dest_points[1][0])/2), round((dest_points[0][1] + dest_points[1][1])/2)]
+        start_point = drone_pos
+        end_point = [round((dest_points[0][0] + dest_points[1][0])/2), round((dest_points[0][1] + dest_points[1][1])/2)]
         
+        points.append(start_point)
+        points.append(end_point)
+
         #assign id to every point
         id = 0
         for point in points:
@@ -478,10 +487,11 @@ if __name__ == "__main__":
     opening = proc_instance.find_openings_using_lowest_distance(opening_points)
     
     waypoints = proc_instance.get_waypoints_by_triangles(clustered_points, line_data)
+    waypoints_filtered = proc_instance.filter_points(waypoints)
 
     #now to path construction
-    directed_graph = Graph(waypoints, opening, drone_last_pos, lines)
-    #directed_graph.test_plot()
+    directed_graph = Graph(waypoints_filtered, opening, drone_last_pos, lines)
+    directed_graph.test_plot()
     algorithm.process_points(directed_graph)
 
     #proc_instance.construct_path(opening, clustered_points)
