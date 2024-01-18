@@ -335,11 +335,23 @@ class MapProcessing:
                 curr_i = i
 
         return distances[curr_i][1:]
+    
+    def filter_points(self, points):
+        #to filter out all points that are duplicit
+
+        filtered_points = []
+        for point in points:
+            if point not in filtered_points:
+                filtered_points.append(point)
+        
+        return filtered_points
 
 class Point:
     def __init__(self, coords, id):
         self.coords = coords
         self.id = id
+
+        #going to put some of the leading points here
         self.leading_to = []
 
 class Graph:
@@ -350,36 +362,62 @@ class Graph:
         self.path_array = []
         self.points_labeled = []
 
-        self.start_point = drone_pos
-        self.end_point = [round((dest_points[0][0] + dest_points[1][0])/2), round((dest_points[0][1] + dest_points[1][1])/2)]
+        start_point_coord = drone_pos
+        end_point_coord = [round((dest_points[0][0] + dest_points[1][0])/2), round((dest_points[0][1] + dest_points[1][1])/2)]
         
+        #self.start_point = Point(start_point_coord, 0)
+        #self.end_point = Point(end_point_coord, 1)
+
+        self.all_points = []
+        self.all_points.extend(points)
+        self.all_points.append(start_point_coord)
+        self.all_points.append(end_point_coord)
+
         #assign id to every point
         id = 0
-        for point in points:
+        for point in self.all_points:
             self.points_labeled.append(Point(point, id))
             id += 1
 
-        points_copy = points.copy()
+        points_copy = self.all_points.copy()
         while True:
             if len(points_copy) == 0:
                 break
 
             point = points_copy[0]
             points_copy.pop(0)
-            for point2 in points:
+            for point2 in points_copy:
                 collision = False
+                point_path = [point, point2]
 
                 #iterate on every line to check colision
                 for line in lines:
-                    point_path = [point, point2]
                     line_path = [line[0][:2].tolist(), line[0][2:].tolist()]
 
                     collision = self.__check_for_collision__(point_path, line_path)
+                    if collision:
+                        #did collide together
+                        break
 
                 if not collision:
                     #did not collide!
-                    pass
+                    
+                    #search all the points and assign them leading to points
 
+                    #
+                    #This is the ugliest piece of code I have ever written in my programming history, I am deeply sorry for all my colleagues that actually have to see this big pile of non-optimised code
+                    #TODO get rid of this 6-for-loop situation
+
+                    for dest_point in self.points_labeled:
+                        if dest_point.coords[0] == point[0] and dest_point.coords[1] == point[1]:
+                            for dest_point2 in self.points_labeled:
+                                if dest_point2.coords[0] == point2[0] and dest_point2.coords[1] == point2[1]:
+                                    dest_point.leading_to.append(dest_point2)
+        
+        self.start_point = self.points_labeled[len(self.points_labeled) - 1]
+        self.end_point = self.points_labeled[len(self.points_labeled) - 2]
+
+        
     def __check_segment__(self, p, q, r):
         if ( (q[0] <= max(p[0], r[0])) and (q[0] >= min(p[0], r[0])) and 
             (q[1] <= max(p[1], r[1])) and (q[1] >= min(p[1], r[1]))): 
@@ -428,13 +466,16 @@ class Graph:
     
         # If none of the cases 
         return False
+    
+    def test_plot(self):
+        plot_img = np.full((MAP_WIDTH, MAP_WIDTH, 3), 255, dtype='uint8')
 
-class Astar:
-    def __init__(self):
-        pass
+        for point in self.points_labeled:
+            cv2.circle(plot_img, point.coords, 8, (125, 125, 0), -1)
+            cv2.putText(plot_img, str(point.id), [point.coords[0] + 5, point.coords[1] - 5], font, fontScale, (255, 0, 0), 1, cv2.LINE_AA) 
 
-    def process_points(self, graph):
-        pass
+        cv2.imshow("test", plot_img)
+        cv2.waitKey(0)
 
 if __name__ == "__main__":
     proc_instance = MapProcessing()
@@ -455,9 +496,11 @@ if __name__ == "__main__":
     opening = proc_instance.find_openings_using_lowest_distance(opening_points)
     
     waypoints = proc_instance.get_waypoints_by_triangles(clustered_points, line_data)
+    waypoints_filtered = proc_instance.filter_points(waypoints)
 
     #now to path construction
-    directed_graph = Graph(waypoints, opening, drone_last_pos, lines)
+    directed_graph = Graph(waypoints_filtered, opening, drone_last_pos, lines)
+    directed_graph.test_plot()
     algorithm.process_points(directed_graph)
 
     #proc_instance.construct_path(opening, clustered_points)
