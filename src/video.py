@@ -63,13 +63,13 @@ def video_recording_finnish():
     ai.stop()
     tello.streamoff()
 
-def sleep(time):
+def sleep(delay):
     start_time = time.monotonic()
     
     while True:
         current_time = time.monotonic()
         elapsed_time = current_time - start_time
-        if elapsed_time >= time:
+        if elapsed_time >= delay:
             break
 
 if __name__ == "__main__":
