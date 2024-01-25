@@ -8,6 +8,9 @@ from sklearn.cluster import KMeans, DBSCAN
 from sklearn.neighbors import KDTree
 from sklearn.metrics import silhouette_score
 
+#test
+from CustomAStar import CustomAStar
+
 LABELS = string.ascii_uppercase
 
 # font 
@@ -417,6 +420,8 @@ class Graph:
         self.start_point = self.points_labeled[len(self.points_labeled) - 1]
         self.end_point = self.points_labeled[len(self.points_labeled) - 2]
 
+        print(self.start_point.id)
+        print(self.end_point.id)
         
     def __check_segment__(self, p, q, r):
         if ( (q[0] <= max(p[0], r[0])) and (q[0] >= min(p[0], r[0])) and 
@@ -474,13 +479,17 @@ class Graph:
             cv2.circle(plot_img, point.coords, 8, (125, 125, 0), -1)
             cv2.putText(plot_img, str(point.id), [point.coords[0] + 5, point.coords[1] - 5], font, fontScale, (255, 0, 0), 1, cv2.LINE_AA) 
 
+            if point.id == self.start_point.id:
+                cv2.circle(plot_img, point.coords, 10, (0, 255, 0), -1) # start for green
+            if point.id == self.end_point.id:
+                cv2.circle(plot_img, point.coords, 10, (0, 0, 255), -1) # end for red
+
         cv2.imshow("test", plot_img)
+        cv2.imshow("test_all", map_vis)
         cv2.waitKey(0)
 
 if __name__ == "__main__":
     proc_instance = MapProcessing()
-    algorithm = Astar()
-    
 
     proc_instance.map_init()
     for (f, l, r, b, qual), deg in brum:
@@ -499,17 +508,10 @@ if __name__ == "__main__":
     waypoints_filtered = proc_instance.filter_points(waypoints)
 
     #now to path construction
-    directed_graph = Graph(waypoints_filtered, opening, drone_last_pos, lines)
-    directed_graph.test_plot()
-    algorithm.process_points(directed_graph)
+    graph_obj = Graph(waypoints_filtered, opening, drone_last_pos, lines)
+    graph_obj.test_plot()
+    algorithm = CustomAStar(graph_obj.points_labeled, graph_obj.start_point, graph_obj.end_point)
 
-    #proc_instance.construct_path(opening, clustered_points)
 
     for point in opening:
         cv2.circle(map_vis, point, 8, (125, 125, 0), -1)
-
-
-    cv2.imshow("test", map_vis)
-    if cv2.waitKey(0) & 0xFF == ord('q'):
-        exit()        
-
