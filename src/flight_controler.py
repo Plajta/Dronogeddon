@@ -2,6 +2,7 @@ import time
 from djitellopy import Tello
 from enum import Enum
 from send import EmailSender
+import cv2
 
 tello = Tello()
 tello.connect(False)
@@ -19,6 +20,11 @@ class Direction(Enum):
     L = 0
     R = 0
     D = 2
+
+sender = "plajta.corporation@hotmail.com"
+reciver = "PlajtaCorp@proton.me"
+
+mymail = EmailSender(sender,reciver)
 
 margin = 5
 
@@ -198,8 +204,18 @@ class FlightController():
         pokracovac = True
 
         while pokracovac:
-            print(self.drone_controller.get_intruder())
-            time.sleep(0.1)
+            data = self.drone_controller.get_intruder()
+            if data:
+                if data[0]:
+                    print("je to tam moji hoši")
+                    print(data[0])
+                    cv2.imwrite("src/Flight_logs/img/img.jpg",data[1])
+                    pokracovac = False
+                    self.drone_controller.stop_program_and_land()
+                    mymail.send_intruder_alert("src/Flight_logs/img/img.jpg")
+                else:
+                    print("chyba na vašem příjmači")
+                time.sleep(0.1)
             
 
 

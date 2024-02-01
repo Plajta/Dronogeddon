@@ -14,10 +14,10 @@ class EmailSender:
     def create_mail(self,subject,body,img_source):
 
         message = MIMEMultipart()
-        message["From"] = sender
-        message["To"] = reciver
+        message["From"] = self.sender
+        message["To"] = self.reciver
         message["Subject"] = subject
-        message["Bcc"] = reciver
+        message["Bcc"] = self.reciver
 
         message.attach(MIMEText(body, "plain"))
 
@@ -41,6 +41,13 @@ class EmailSender:
         server.sendmail(sender, reciver, self.text)
         server.quit()
 
+    def send_intruder_alert(self,img_src):
+        subject = "Pozor!! Pozor!!"
+        body = "Na vědomost se dává že se tu někdo potuluje.\nToto je ten býdník:"
+
+        self.create_mail(subject,body,img_src)
+        self.send_mail()
+
 if __name__ == "__main__":
 
     sender = "plajta.corporation@hotmail.com"
@@ -50,7 +57,7 @@ if __name__ == "__main__":
 
     subject = "Pozor!! Pozor!!"
     body = "Na vědomost se dává že se tu někdo potuluje.\nToto je ten býdník:"
-    img_src = "src/test/payload.png"
+    img_src = "src/Flight_logs/img/img.jpg"
 
     mymail.create_mail(subject,body,img_src)
     mymail.send_mail()

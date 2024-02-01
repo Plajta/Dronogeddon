@@ -22,8 +22,8 @@ telemetry_thread.start()
 video_thread = threading.Thread(target=drone_controller.capture_video_with_telemetry)
 video_thread.start()
 
-# flight_controller = FlightController(drone_controller)
-# flight_controller.flight_program()
+flight_controller = FlightController(drone_controller)
+flight_controller.flight_program()
 
 
 # stop()
