@@ -3,20 +3,23 @@ import math
 
 
 class CustomAStar(AStar):
-    def __init__(self, nodes, starting_node, ending_node):
-        self.nodes = {}
+    def __init__(self):
+        pass
+        # self.nodes = nodes
 
-        #process all points to supported format
-        for node in nodes:
-            leading_to = []
-            for lead_point in node.leading_to:
-                lead_id = lead_point.id
-                lead_dist = round(self.distance_between(node, lead_point), 2)
-                leading_to.append((lead_id, lead_dist))
-
-            self.nodes[node.id] = leading_to
-
-        print(self.nodes)
+        # self.nodes = {}
+        #
+        # #process all points to supported format
+        # for node in nodes:
+        #     leading_to = []
+        #     for lead_point in node.leading_to:
+        #         lead_id = lead_point.id
+        #         lead_dist = round(self.distance_between(node, lead_point), 2)
+        #         leading_to.append((lead_id, lead_dist))
+        #
+        #     self.nodes[node.id] = leading_to
+        #
+        # print(self.nodes)
 
     def neighbors(self, n):
         for n1 in n.leading_to:
