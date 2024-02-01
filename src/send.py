@@ -1,0 +1,56 @@
+import smtplib
+
+
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+
+class EmailSender:
+    def __init__(self,sender,reciver):
+        self.sender = sender
+        self.reciver = reciver
+        self.text = ""
+
+    def create_mail(self,subject,body,img_source):
+
+        message = MIMEMultipart()
+        message["From"] = sender
+        message["To"] = reciver
+        message["Subject"] = subject
+        message["Bcc"] = reciver
+
+        message.attach(MIMEText(body, "plain"))
+
+        self.text = MIMEText('<img src="cid:image1">', 'html')
+        message.attach(self.text)
+
+        image = MIMEImage(open(img_source, 'rb').read())
+
+        image.add_header('Content-ID', '<image1>')
+        message.attach(image)
+
+        self.text = message.as_string()
+
+
+    def send_mail(self):
+
+
+        server = smtplib.SMTP('smtp.office365.com', 587)
+        server.starttls()
+        server.login(sender, "Plajta123")
+        server.sendmail(sender, reciver, self.text)
+        server.quit()
+
+if __name__ == "__main__":
+
+    sender = "plajta.corporation@hotmail.com"
+    reciver = "PlajtaCorp@proton.me"
+
+    mymail = EmailSender(sender,reciver)
+
+    subject = "Pozor!! Pozor!!"
+    body = "Na vědomost se dává že se tu někdo potuluje.\nToto je ten býdník:"
+    img_src = "src/test/payload.png"
+
+    mymail.create_mail(subject,body,img_src)
+    mymail.send_mail()

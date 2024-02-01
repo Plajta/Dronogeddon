@@ -44,7 +44,8 @@ def video_recording_loop(data):
             2, 
             cv2.LINE_4) 
     
-    ai.main(img_out)
+    cords = ai.main(img_out)
+
     
     video_out.write(img_out)
 
@@ -53,9 +54,9 @@ def video_recording_loop(data):
     cv2.imshow("output_drone", img_out)
 
     if cv2.waitKey(1) == ord('q'):
-        return False
+        return True, []
     
-    return True
+    return False,cords
 
 def video_recording_finnish():
     cv2.destroyWindow("output_drone")
