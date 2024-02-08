@@ -25,5 +25,6 @@ video_thread.start()
 flight_controller = FlightController(drone_controller)
 flight_controller.flight_program()
 
-
-# stop()
+print("stop")
+stop()
+print("všechno je to uděláno všechno je to hotovo")

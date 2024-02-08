@@ -62,7 +62,6 @@ def video_recording_finnish():
     cv2.destroyWindow("output_drone")
     video_out.release()
     ai.stop()
-    tello.streamoff()
 
 def sleep(delay):
     start_time = time.monotonic()
