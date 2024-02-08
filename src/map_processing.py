@@ -510,7 +510,10 @@ if __name__ == "__main__":
     #now to path construction
     graph_obj = Graph(waypoints_filtered, opening, drone_last_pos, lines)
     graph_obj.test_plot()
-    algorithm = CustomAStar(graph_obj.points_labeled, graph_obj.start_point, graph_obj.end_point)
+    # algorithm = CustomAStar(graph_obj.points_labeled, graph_obj.start_point, graph_obj.end_point)
+    algorithm = CustomAStar()
+    path = algorithm.astar(graph_obj.start_point, graph_obj.end_point)
+    print(path)
 
 
     for point in opening:

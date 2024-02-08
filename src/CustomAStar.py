@@ -31,8 +31,8 @@ class CustomAStar(AStar):
         return math.sqrt(dx ** 2 + dy ** 2)
 
     def heuristic_cost_estimate(self, current, goal):
-        dx = current.coord[0] - goal.coord[0]
-        dy = current.coord[1] - goal.coord[1]
+        dx = current.coords[0] - goal.coords[0]
+        dy = current.coords[1] - goal.coords[1]
         return math.sqrt(dx ** 2 + dy ** 2)
 
     def is_goal_reached(self, current, goal):
