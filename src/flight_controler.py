@@ -21,10 +21,8 @@ class Direction(Enum):
     R = 0
     D = 2
 
-sender = "plajta.corporation@hotmail.com"
-reciver = "PlajtaCorp@proton.me"
 
-mymail = EmailSender(sender,reciver)
+mymail = EmailSender()
 
 margin = 5
 

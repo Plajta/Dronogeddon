@@ -15,8 +15,7 @@ human-detection-dataset
 .vscode
 
 mp_env
-secret.yml
-sender.yml
+secret.yaml
 
 #door detector
 /src/neural/dataset/test
