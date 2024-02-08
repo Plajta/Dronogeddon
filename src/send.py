@@ -1,13 +1,16 @@
 import smtplib
 import yaml
+import os
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 
+PATH_TO_SECRET = os.path.join(os.path.dirname(os.path.abspath(__file__))[:-3], "secret.yaml")
+
 class EmailSender:
     def __init__(self):
-        stream = open("../secret.yaml", "r")
+        stream = open(PATH_TO_SECRET, "r")
         secret_data = None
         try:
             secret_data = yaml.safe_load(stream)
@@ -46,7 +49,7 @@ class EmailSender:
 
         server = smtplib.SMTP('smtp.office365.com', 587)
         server.starttls()
-        
+
         server.login(self.sender, self.passwd)
         server.sendmail(self.sender, self.reciver, self.text)
         server.quit()
