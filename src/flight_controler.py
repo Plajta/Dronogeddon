@@ -157,7 +157,6 @@ class FlightController():
         print("rot")
         self.rotate(speed,end,deg,speed < 0,shift)
         
-
     def rotationBy(self,by):
         self.rotationTo(by+self.drone_controller.get_distance_data()[5])
 
@@ -177,7 +176,6 @@ class FlightController():
 
         tello.send_rc_control(0,0,0,0)
         
-
     def kruh(self):
         print("kruh")
         tello.send_rc_control(0,0,0,0)
@@ -211,6 +209,7 @@ class FlightController():
                     pokracovac = False
                     self.drone_controller.stop_program_and_land()
                     mymail.send_intruder_alert("src/Flight_logs/img/img.jpg")
+                    print("poslano")
                 else:
                     print("chyba na vašem příjmači")
                 time.sleep(0.1)
@@ -219,8 +218,8 @@ class FlightController():
 
     def flight_program(self):
         
-        #takeoff = self.takeoff()   #čiste pro testování bez letu
-        takeoff = True
+        #takeoff = self.takeoff()   
+        takeoff = True #čiste pro testování bez letu
         
         if takeoff:
 

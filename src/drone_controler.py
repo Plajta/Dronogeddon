@@ -38,6 +38,11 @@ class DroneController:
             if beh:
                 self.stop_program_and_land()
         vid.video_recording_finnish()
+        with self.telloLock:
+            try:
+                tello.streamoff()
+            except:
+                print("can't cut the stream")
 
     def stop_program_and_land(self):
         self.stop_program = True

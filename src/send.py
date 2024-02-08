@@ -46,8 +46,9 @@ class EmailSender:
 
         server = smtplib.SMTP('smtp.office365.com', 587)
         server.starttls()
-        server.login(sender, self.passwd)
-        server.sendmail(sender, reciver, self.text)
+        
+        server.login(self.sender, self.passwd)
+        server.sendmail(self.sender, self.reciver, self.text)
         server.quit()
 
     def send_intruder_alert(self,img_src):
