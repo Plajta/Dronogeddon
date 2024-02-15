@@ -511,8 +511,12 @@ if __name__ == "__main__":
     # algorithm = CustomAStar(graph_obj.points_labeled, graph_obj.start_point, graph_obj.end_point)
     algorithm = CustomAStar()
     path = algorithm.astar(graph_obj.start_point, graph_obj.end_point)
-    print(path)
+    for i in list(path):
+        map_vis = cv2.circle(map_vis, (i.coords[0], i.coords[1]), 10, (128, 0, 128), -1)
+        print(i.id)
 
+    cv2.imshow("test_all", map_vis)
+    cv2.waitKey(0)
 
     for point in opening:
         cv2.circle(map_vis, point, 8, (125, 125, 0), -1)
