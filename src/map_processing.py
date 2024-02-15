@@ -117,7 +117,7 @@ class MapProcessing:
         labels = kmeans.labels_
         n_clusters = labels.max()
 
-        point_clusters = [ [] for _ in range(n_clusters + 1) ]
+        point_clusters = [[] for _ in range(n_clusters + 1) ]
         representative_points = []
 
         for i, point in enumerate(points):
