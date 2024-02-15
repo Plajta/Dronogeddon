@@ -66,7 +66,7 @@ if __name__ == "__main__":
     sender = "plajta.corporation@hotmail.com"
     reciver = "PlajtaCorp@proton.me"
 
-    mymail = EmailSender(sender,reciver)
+    mymail = EmailSender()
 
     subject = "Pozor!! Pozor!!"
     body = "Na vědomost se dává že se tu někdo potuluje.\nToto je ten býdník:"
