@@ -51,17 +51,21 @@ class CustomAStar(AStar):
     # Other funcs
     #
 
-    def vis_path(self, path):
+    def vis_path(self, path, all_points):
         plot_img = np.full((MAP_WIDTH, MAP_WIDTH, 3), 255, dtype='uint8')
 
+        for point in all_points:
+            cv2.circle(plot_img, point.coords, 8, (0, 0, 0), 3)
+            cv2.circle(plot_img, point.coords, 8, (125, 125, 0), -1)
+
         path_list = list(path)
-        for i, point in enumerate(path_list):
+        for i, path_point in enumerate(path_list):
             if i != len(path_list) - 1:
-                cv2.line(plot_img, point.coords, path_list[i + 1].coords, (0, 255, 0), 2)
+                cv2.line(plot_img, path_point.coords, path_list[i + 1].coords, (0, 255, 0), 2)
             
-            cv2.circle(plot_img, point.coords, 10, (128, 0, 128), -1)
-            cv2.putText(plot_img, str(point.id), [point.coords[0] + 5, point.coords[1] - 5], font, fontScale, (255, 0, 0), 1, cv2.LINE_AA) 
-            print(point.id)
+            cv2.circle(plot_img, path_point.coords, 10, (128, 0, 128), -1)
+            cv2.putText(plot_img, str(path_point.id), [point.coords[0] + 5, path_point.coords[1] - 5], font, fontScale, (255, 0, 0), 1, cv2.LINE_AA) 
+            print(path_point.id)
 
         cv2.imshow("result", plot_img)
         cv2.waitKey(0)
