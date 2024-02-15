@@ -123,7 +123,7 @@ class MapProcessing:
         labels = kmeans.labels_
         n_clusters = labels.max()
 
-        point_clusters = [ [] for _ in range(n_clusters + 1) ]
+        point_clusters = [[] for _ in range(n_clusters + 1) ]
         representative_points = []
 
         for i, point in enumerate(points):
@@ -511,6 +511,7 @@ if __name__ == "__main__":
     # algorithm = CustomAStar(graph_obj.points_labeled, graph_obj.start_point, graph_obj.end_point)
     algorithm = CustomAStar()
     path = algorithm.astar(graph_obj.start_point, graph_obj.end_point)
+    
     algorithm.vis_path(path)
 
     cv2.imshow("test_all", map_vis)
