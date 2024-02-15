@@ -372,8 +372,9 @@ class Graph:
         #self.end_point = Point(end_point_coord, 1)
 
         self.all_points = []
-        self.all_points.extend(points)
+        
         self.all_points.append(start_point_coord)
+        self.all_points.extend(points)
         self.all_points.append(end_point_coord)
 
         #assign id to every point
@@ -417,11 +418,8 @@ class Graph:
                                 if dest_point2.coords[0] == point2[0] and dest_point2.coords[1] == point2[1]:
                                     dest_point.leading_to.append(dest_point2)
         
-        self.start_point = self.points_labeled[len(self.points_labeled) - 1]
-        self.end_point = self.points_labeled[len(self.points_labeled) - 2]
-
-        print(self.start_point.id)
-        print(self.end_point.id)
+        self.start_point = self.points_labeled[0]
+        self.end_point = self.points_labeled[len(self.points_labeled) - 1]
         
     def __check_segment__(self, p, q, r):
         if ( (q[0] <= max(p[0], r[0])) and (q[0] >= min(p[0], r[0])) and 
