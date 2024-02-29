@@ -3,6 +3,7 @@ from djitellopy import Tello
 from enum import Enum
 from send import EmailSender
 import cv2
+import threading
 
 tello = Tello()
 tello.connect(False)
@@ -29,13 +30,15 @@ margin = 5
 class FlightController():
     def __init__(self, drone_controller):
         self.drone_controller = drone_controller
-        self.current_work_thread = 0
+        self.stop_task = False
+        self.human = False
 
     def takeoff(self):
         takeoff = True
 
         with self.drone_controller.telloLock:
             try:
+                tello.send_rc_control(0,0,0,0)
                 tello.takeoff()
             except:
                 takeoff = False
@@ -168,7 +171,8 @@ class FlightController():
         print(speed,end,deg,direction)
         
         while not((deg >= end) ^ direction):
-
+            if self.stop_task:
+                break
             deg = (self.drone_controller.get_distance_data()[5])
             time.sleep(0.1)
             print(f"deg: {deg} deg-shift: {(deg + shift)%360} to tgD: {abs((deg+shift)%360-end)}  deg >= start: {(deg >= end) ^ direction} all: {((deg >= end) ^ direction)}")
@@ -196,38 +200,73 @@ class FlightController():
 
         tello.send_rc_control(0,0,0,0)
 
-    def see_and_send(self):
-        pokracovac = True
-
-        while pokracovac:
+    def intruder_seeking(self):
+        while not self.drone_controller.stop_program:
             data = self.drone_controller.get_intruder()
             if data:
                 if data[0]:
                     print("je to tam moji hoši")
                     print(data[0])
                     cv2.imwrite("src/Flight_logs/img/img.jpg",data[1])
-                    pokracovac = False
-                    self.drone_controller.stop_program_and_land()
-                    mymail.send_intruder_alert("src/Flight_logs/img/img.jpg")
-                    print("poslano")
+                    self.stop_task = True
+                    self.human = True
+                    try:
+                        mymail.send_intruder_alert("src/Flight_logs/img/img.jpg")
+                        print("poslano")
+                    except:
+                        pass
+                    break
                 else:
                     print("chyba na vašem příjmači")
                 time.sleep(0.1)
+
+    def intruder_folowing(self):
+        while  not self.drone_controller.stop_program:
+            data = self.drone_controller.get_intruder()
+            if data and data[0]:                                                                   #checks if there is a intruder entry
+                intruder = data[0][0]                                                              #loads the first person if there is
+                intruder = [round((intruder[0]+intruder[2])/2),round((intruder[1]+intruder[3])/2)] #calculate the midle point from the coordinates of rectangle
+                distance_from_centre = intruder[0] - 960/2
+                speed = round(distance_from_centre * 5/52)
+                with self.drone_controller.telloLock:
+                    tello.send_rc_control(0,0,0,speed)
+                    print(speed,"\t|\t", distance_from_centre)
+
             
 
-
     def flight_program(self):
-        
-        #takeoff = self.takeoff()   
-        takeoff = True #čiste pro testování bez letu
+        program_buffer = {
+            self.rotationBy : [90],
+            self.translation : [0,100],
+            self.rotationBy : [180],
+            self.intruder_folowing : []
+        }
+
+
+        takeoff = self.takeoff()   
+        #takeoff = True #čiste pro testování bez letu
         
         if takeoff:
+            intr = threading.Thread(target=self.intruder_seeking)
+            #intr.start()
 
-            self.see_and_send()
+            for instruction in program_buffer.keys():
+                atributes = program_buffer[instruction]
+                instruction(*atributes)
+
+                if(self.human):
+                    self.intruder_folowing()
+
+            
+            
+
 
             self.drone_controller.stop_program_and_land()
 
             print("end")
+            intr.join
+        else:
+            self.drone_controller.stop_program()
 
 
     
