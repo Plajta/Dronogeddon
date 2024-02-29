@@ -4,7 +4,7 @@ from telemetry import TelemetryScanner
 from flight_controler import FlightController
 import threading
 import time
-import keyboard
+
 
 tello = Tello()
 tello.connect(False)

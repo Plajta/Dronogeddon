@@ -44,6 +44,10 @@ class DroneController:
             except:
                 print("can't cut the stream")
 
+    def stop_program(self):
+        self.stop_program = True
+
+
     def stop_program_and_land(self):
         self.stop_program = True
         with self.telloLock:

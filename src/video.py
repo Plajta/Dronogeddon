@@ -54,7 +54,7 @@ def video_recording_loop(data):
     cv2.imshow("output_drone", img_out)
 
     if cv2.waitKey(1) == ord('q'):
-        return True, [],img_out
+        return True, [[],img_out]
     
     return False,[cords,img_out.copy()]
 
