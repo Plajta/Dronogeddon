@@ -1,12 +1,17 @@
-opencv-python
+#drone control
 djitellopy
+
+#image processing
 numpy
 matplotlib
-pyyaml
-customtkinter
+opencv-python
+
+#algo & ai
 torchvision
 torch
-seaborn
 astar
+wandb
 
-#NOTE: dont use this on conda builds!
+#others
+pyyaml
+customtkinter

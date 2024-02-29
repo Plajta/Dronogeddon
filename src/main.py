@@ -3,7 +3,6 @@ from drone_controler import DroneController
 from telemetry import TelemetryScanner
 from flight_controler import FlightController
 import threading
-import time
 
 
 tello = Tello()

@@ -1,12 +1,9 @@
-import time
-import string
 import math
 import os
 
 import cv2
 import numpy as np
 from sklearn.cluster import KMeans, DBSCAN
-from sklearn.neighbors import KDTree
 from sklearn.metrics import silhouette_score
 
 from CustomAStar import CustomAStar
