@@ -68,7 +68,7 @@ class FlightController():
             dis = self.drone_controller.get_distance_data()
             print(f"vzdálenost: {dis[0]}  stupně: {deg}")
             
-            data.append([dis[0],deg])
+            data.append([dis,deg])
 
         tello.send_rc_control(0,0,0,0)
         return data
@@ -236,10 +236,7 @@ class FlightController():
 
     def flight_program(self):
         program_buffer = {
-            self.rotationBy : [90],
-            self.translation : [0,100],
-            self.rotationBy : [180],
-            self.intruder_folowing : []
+            self.scan : []
         }
 
 
@@ -250,14 +247,21 @@ class FlightController():
             intr = threading.Thread(target=self.intruder_seeking)
             #intr.start()
 
-            for instruction in program_buffer.keys():
-                atributes = program_buffer[instruction]
-                instruction(*atributes)
+            # for instruction in program_buffer.keys():
+            #     atributes = program_buffer[instruction]
+            #     instruction(*atributes)
 
-                if(self.human):
-                    self.intruder_folowing()
+            #     if(self.human):
+            #         self.intruder_folowing()
 
-            
+            with open("src/Flight_logs/scan_data/danovo_data_dva.txt","w") as f:
+                data = self.scan()
+                print(data)
+                try:
+                    f.write(f"{data}")
+                except:
+                    pass
+                
             
 
 
