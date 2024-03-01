@@ -7,7 +7,7 @@ class ProgramHandler():
         self.queue = queue
 
     def napocitej(self, kolik):
-        # Function that counts from 1 to 'kolik' with a sleep of 1 second between each count
+        # Example function
         for i in range(kolik):
             print(i + 1)
             sleep(1)
@@ -33,13 +33,15 @@ input_thread = threading.Thread(target=PrH.run)
 # Put a task in the queue (calling PrH.napocitej with argument 5)
 shared_queue.put([PrH.napocitej, 5])
 
-# Put a stop signal in the queue to terminate the thread
-shared_queue.put("stop")
-
 # Start the thread
 input_thread.start()
 
+
 #adding functions to queue...
+
+
+# Put a stop signal in the queue to terminate the thread
+shared_queue.put("stop")
 
 # Wait for the input thread to finish (when "stop" is put into the queue)
 input_thread.join()
