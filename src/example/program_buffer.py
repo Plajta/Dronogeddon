@@ -1,38 +1,45 @@
-import queue
 import threading
 from time import sleep
+import queue
 
-def napocitej(kolik):
-    for i in range(kolik):
-        print(i+1)
-        sleep(1)
+class ProgramHandler():
+    def __init__(self, queue):
+        self.queue = queue
 
-def input_thread(queue):
-    
-    queue.put([napocitej,5])
+    def napocitej(self, kolik):
+        # Function that counts from 1 to 'kolik' with a sleep of 1 second between each count
+        for i in range(kolik):
+            print(i + 1)
+            sleep(1)
 
-def print_thread(queue):
-    while True:
-        # Block until an item is available in the queue
-        step = queue.get()
-        if step != None:
-            step[0](step[1])
-        
+    def run(self):
+        # Main function for the thread that listens for tasks in the queue and executes them
+        while True:
+            step = self.queue.get()
+            if step == "stop":
+                break
+            elif step is not None:
+                step[0](step[1])
 
 # Create a shared queue
 shared_queue = queue.Queue()
 
-# Create input and print threads
-input_thread = threading.Thread(target=input_thread, args=(shared_queue,))
-print_thread = threading.Thread(target=print_thread, args=(shared_queue,))
+# Create an instance of the ProgramHandler class with the shared queue
+PrH = ProgramHandler(shared_queue)
 
-# Start the threads
+# Create a thread for the run method of ProgramHandler
+input_thread = threading.Thread(target=PrH.run)
+
+# Put a task in the queue (calling PrH.napocitej with argument 5)
+shared_queue.put([PrH.napocitej, 5])
+
+# Put a stop signal in the queue to terminate the thread
+shared_queue.put("stop")
+
+# Start the thread
 input_thread.start()
-print_thread.start()
 
-# Wait for the input thread to finish (when the user types 'exit')
+#adding functions to queue...
+
+# Wait for the input thread to finish (when "stop" is put into the queue)
 input_thread.join()
-
-# Signal the print thread to finish
-shared_queue.put(None)
-print_thread.join()
