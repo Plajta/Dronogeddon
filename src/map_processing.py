@@ -44,6 +44,7 @@ class MapProcessing:
         for (f, l, r, b, qual, qual2), deg in self.input_data:
             coords_f = self.update_map(f, deg)
             coords_b = self.update_map(b, deg+180)
+            print(coords_f)
 
             #merge together with weights (front = 0.8, back = 0.5)
             merged_coords = [round((coords_f[0] * 0.8 + coords_b[0] * 0.5)/(0.8 + 0.5)), round((coords_f[1] * 0.8 + coords_b[1] * 0.5)/(0.8 + 0.5))]
