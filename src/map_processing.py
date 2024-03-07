@@ -42,9 +42,15 @@ class MapProcessing:
 
         self.map_init()
         for (f, l, r, b, qual, qual2), deg in self.input_data:
-            self.update_map(f, deg, (0, 0, 0))
-            self.update_map(b, deg+180, (0, 128, 128))
-            self.update_map(l, deg+270, (0, 0, 0))
+            coords_f = self.update_map(f, deg)
+            coords_b = self.update_map(b, deg+180)
+
+            #merge together with weights (front = 0.8, back = 0.5)
+            merged_coords = [round((coords_f[0] * 0.8 + coords_b[0] * 0.5)/(0.8 + 0.5)), round((coords_f[1] * 0.8 + coords_b[1] * 0.5)/(0.8 + 0.5))]
+
+            self.write_to_vis(merged_coords, (0, 0, 0))
+            self.write_to_vis(coords_f, (0, 255, 0))
+            self.write_to_vis(coords_b, (255, 0, 0))
 
         if self.debug_mode:
             cv2.imshow("test", self.map_vis)
@@ -67,18 +73,20 @@ class MapProcessing:
         self.map_vis = cv2.line(self.map_vis, (xstart+length, ystart-10), (xstart+length, ystart+10), color, 1)
         pass
 
-    def update_map(self, dist, curr_angle, color):
-
+    def update_map(self, dist, curr_angle):
         xpos = np.cos(-curr_angle/180*np.pi)*dist/2 + self.map_width/2
         ypos = np.sin(-curr_angle/180*np.pi)*dist/2 + self.map_height/2
 
+        return [xpos, ypos]
+    
+    def write_to_vis(self, coords, color):
         try:
-            self.map_data[round(xpos), round(ypos)] = 1
-            self.map_vis = cv2.circle(self.map_vis, (round(ypos), round(xpos)), 1, color, 2)
+            self.map_data[round(coords[0]), round(coords[1])] = 1
+            self.map_vis = cv2.circle(self.map_vis, (round(coords[0]), round(coords[1])), 1, color, 2)
         except IndexError as e:
             print(e)
 
-    def process_map(self, map_vis, map_d):
+    def process_map(self, map_d):
         line_d = np.zeros(map_d.shape[:2], dtype=np.uint8)
 
         #Dilation
@@ -392,7 +400,7 @@ class MapProcessing:
     def main(self):
         curr_drone = Drone(self.drone_angle, self.drone_pos)
 
-        point_data, line_data, lines = self.process_map(self.map_vis, self.map_data)
+        point_data, line_data, lines = self.process_map(self.map_data)
         clustered_points = self.cluster_DBSCAN(point_data)
         opening_points = self.get_room_openings(clustered_points, line_data)
         opening = self.find_openings_using_lowest_distance(opening_points)
@@ -407,7 +415,7 @@ class MapProcessing:
 
         algorithm = CustomAStar()
         path = algorithm.astar(graph_obj.start_point, graph_obj.end_point)
-        if self.debug_mode and len(path) != 0:
+        if self.debug_mode and path != None:
             algorithm.vis_path(path, graph_obj.points_labeled)
 
         path_data = self.calculate_path_for_drone(path, curr_drone)
@@ -557,6 +565,7 @@ def read_data(filename):
 
     return data
 
+#TODO: možná časem rewrite získávání room openings místo obrazových dat
 if __name__ == "__main__":
     #variables
     map_width = 1000
