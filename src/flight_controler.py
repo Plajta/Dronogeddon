@@ -4,6 +4,7 @@ from enum import Enum
 from send import EmailSender
 import cv2
 import threading
+import queue 
 
 tello = Tello()
 tello.connect(False)
@@ -27,7 +28,7 @@ mymail = EmailSender()
 
 margin = 5
 
-class FlightController():
+class FlightControler():
     def __init__(self, drone_controller):
         self.drone_controller = drone_controller
         self.stop_task = False
@@ -214,11 +215,12 @@ class FlightController():
                         mymail.send_intruder_alert("src/Flight_logs/img/img.jpg")
                         print("poslano")
                     except:
-                        pass
+                        print("neposlano")
                     break
                 else:
                     print("chyba na vašem příjmači")
                 time.sleep(0.1)
+        return "intruder zaznamenan"
 
     def intruder_folowing(self):
         while  not self.drone_controller.stop_program:
@@ -271,6 +273,18 @@ class FlightController():
             intr.join
         else:
             self.drone_controller.stop_program()
+
+    def run(self,queue,output_queue):
+        while True:
+            output = None
+            step = queue.get()
+            if step == "stop":
+                break
+            elif step is not None:
+                print(step[0])
+                output = step[0](*step[1])
+            if not output == None:
+                output_queue.put([step[0],output])
 
 
     
