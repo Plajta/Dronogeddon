@@ -16,7 +16,7 @@ fontScale = 1
    
 # Blue color in BGR 
 color = (255, 0, 0) 
-  
+
 # Line thickness of 2 px 
 thickness = 2
 
@@ -26,7 +26,7 @@ class Drone:
         self.drone_position = drone_position
 
 class MapProcessing:
-    def __init__(self, inp_data, map_shape, drone_pos, drone_angle ,debug):
+    def __init__(self, inp_data, map_shape, drone_pos, drone_angle, debug):
         self.tmp_map = np.zeros((1200, 1200), dtype=np.uint8)
         self.corners = []
         self.input_data = inp_data
@@ -44,9 +44,11 @@ class MapProcessing:
         for (f, l, r, b, qual, qual2), deg in self.input_data:
             self.update_map(f, deg, (0, 0, 0))
             self.update_map(b, deg+180, (0, 128, 128))
+            self.update_map(l, deg+270, (0, 0, 0))
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+        if self.debug_mode:
+            cv2.imshow("test", self.map_vis)
+            cv2.waitKey(0)
 
     def map_init(self):
 
@@ -317,24 +319,30 @@ class MapProcessing:
     
     def find_openings_using_lowest_distance(self, points):
         distances = []
-        for i, point in enumerate(points):
+        if len(points) == 0:
+            print("Did not found any points, quitting because no destination was selected :(")
+            exit(0) #TODO
+        elif len(points) == 1:
+            return points[0]
+        else:
             points_copy = points.copy()
-            points_copy.pop(i)
+            for point in points_copy:
+                points_copy.pop(0)
+                for point_copy in points_copy:
 
-            for point_copy in points_copy:
-                c = round(math.sqrt(abs(point[0] - point_copy[0])**2 + abs(point[1] - point_copy[1])**2), 2)
-                distances.append([c, point, point_copy])
+                    c = round(math.sqrt(abs(point[0] - point_copy[0])**2 + abs(point[1] - point_copy[1])**2), 2)
+                    distances.append([c, point, point_copy])
 
-        min_num = 0
-        curr_i = 0
-        for i, dist in enumerate(distances):
-            if i == 0:
-                min_num = dist[0]
+            min_num = 0
+            curr_i = 0
+            for i, dist in enumerate(distances):
+                if i == 0:
+                    min_num = dist[0]
 
-            if dist[0] <= min_num:
-                curr_i = i
+                if dist[0] <= min_num:
+                    curr_i = i
 
-        return distances[curr_i][1:]
+            return distances[curr_i][1:]
     
     def filter_points(self, points):
         #to filter out all points that are duplicit
@@ -388,7 +396,7 @@ class MapProcessing:
         clustered_points = self.cluster_DBSCAN(point_data)
         opening_points = self.get_room_openings(clustered_points, line_data)
         opening = self.find_openings_using_lowest_distance(opening_points)
-        
+
         waypoints = self.get_waypoints_by_triangles(clustered_points, line_data)
         waypoints_filtered = self.filter_points(waypoints)
 
@@ -399,7 +407,7 @@ class MapProcessing:
 
         algorithm = CustomAStar()
         path = algorithm.astar(graph_obj.start_point, graph_obj.end_point)
-        if self.debug_mode:
+        if self.debug_mode and len(path) != 0:
             algorithm.vis_path(path, graph_obj.points_labeled)
 
         path_data = self.calculate_path_for_drone(path, curr_drone)
@@ -542,18 +550,23 @@ class Graph:
         cv2.imshow("test_all", map_vis)
         cv2.waitKey(0)
 
+def read_data(filename):
+    file = open(os.path.join(os.path.dirname(os.path.abspath(__file__))[:-3], "src/Flight_logs/scan_data/" + filename),'r')
+    data = file.read()
+    data = eval(data)
+
+    return data
+
 if __name__ == "__main__":
     #variables
     map_width = 1000
 
-    file = open(os.path.join(os.path.dirname(os.path.abspath(__file__))[:-3], "src/Flight_logs/scan_data/danovo_data_dva.txt"),'r')
-    data = file.read()
-    data = eval(data)
+    data = read_data("cafeteria.txt")
+
     drone_last_pos = (round(map_width / 2), round(map_width / 2)) #TODO pak změň - teď je to default
     drone_angle = 0
-    debug = False
+    debug = True
 
     proc_instance = MapProcessing(inp_data=data, map_shape=(map_width, map_width), drone_pos=drone_last_pos,
                                   drone_angle=drone_angle, debug=debug)
     data = proc_instance.main()
-    print(data)
