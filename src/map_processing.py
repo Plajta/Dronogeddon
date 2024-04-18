@@ -6,6 +6,10 @@ import numpy as np
 from sklearn.cluster import KMeans, DBSCAN
 from sklearn.metrics import silhouette_score
 
+#visualisation
+import matplotlib.pyplot as plt
+import networkx as nx
+
 from CustomAStar import CustomAStar
 
 # font 
@@ -45,11 +49,12 @@ class MapProcessing:
             coords_f = self.update_map(f, deg)
             coords_b = self.update_map(b, deg+180)
 
+            #TODO
             #merge together with weights (front = 0.8, back = 0.5)
-            merged_coords = [round((coords_f[0] * 0.8 + coords_b[0] * 0.5)/(0.8 + 0.5)), round((coords_f[1] * 0.8 + coords_b[1] * 0.5)/(0.8 + 0.5))]
+            #merged_coords = [round((coords_f[0] * 0.8 + coords_b[0] * 0.5)/(0.8 + 0.5)), round((coords_f[1] * 0.8 + coords_b[1] * 0.5)/(0.8 + 0.5))]
 
-            self.write_to_vis(merged_coords, (0, 0, 0))
-            self.write_to_vis(coords_f, (0, 255, 0))
+            #self.write_to_vis(merged_coords, (0, 0, 0))
+            #self.write_to_vis(coords_f, (0, 255, 0))
             self.write_to_vis(coords_b, (255, 0, 0))
 
         if self.debug_mode:
@@ -416,6 +421,7 @@ class MapProcessing:
         graph_obj = Graph(waypoints_filtered, opening, drone_last_pos, lines)
         if self.debug_mode:
             graph_obj.test_plot(self.map_width, self.map_vis)
+            graph_obj.matplotlib_plot(graph_obj.points_labeled)
 
         algorithm = CustomAStar()
         path = algorithm.astar(graph_obj.start_point, graph_obj.end_point)
@@ -567,6 +573,46 @@ class Graph:
         cv2.imshow("map_vis", map_vis)
         cv2.waitKey(0)
 
+        cv2.destroyWindow("plot_img")
+        cv2.destroyWindow("map_vis")
+        
+    def matplotlib_plot(self, waypoints):
+        for point in waypoints:
+            print(point.leading_to)
+            print(point.id)
+            print(point.coords)
+            print("---")
+
+        G = nx.Graph()
+
+        G.add_edge('a', 'b', weight=0.6)
+        G.add_edge('a', 'c', weight=0.2)
+        G.add_edge('c', 'd', weight=0.1)
+        G.add_edge('c', 'e', weight=0.7)
+        G.add_edge('c', 'f', weight=0.9)
+        G.add_edge('a', 'd', weight=0.3)
+
+        elarge = [(u, v) for (u, v, d) in G.edges(data=True) if d['weight'] > 0.5]
+        esmall = [(u, v) for (u, v, d) in G.edges(data=True) if d['weight'] <= 0.5]
+
+        pos = nx.spring_layout(G)  # positions for all nodes
+
+        # nodes
+        nx.draw_networkx_nodes(G, pos, node_size=700, nodelist=['e','f','b'])
+        nx.draw_networkx_nodes(G, pos, node_size=1400, nodelist=['c','a','d'], node_color='blue')
+
+        # edges
+        nx.draw_networkx_edges(G, pos, edgelist=elarge,
+                            width=6)
+        nx.draw_networkx_edges(G, pos, edgelist=esmall,
+                            width=6, alpha=0.5, edge_color='b', style='dashed')
+
+        # labels
+        nx.draw_networkx_labels(G, pos, font_size=20, font_family='sans-serif')
+
+        plt.axis('off')
+        plt.show()
+
 def read_data(filename):
     file = open(os.path.join(os.path.dirname(os.path.abspath(__file__))[:-3], "src/Flight_logs/scan_data/" + filename),'r')
     data = file.read()
@@ -579,7 +625,7 @@ if __name__ == "__main__":
     #variables
     map_width = 1000
 
-    data = read_data("perfecto_room.txt")
+    data = read_data("cafeteria.txt")
 
     drone_last_pos = (round(map_width / 2), round(map_width / 2)) #TODO pak změň - teď je to default
     drone_angle = 0
