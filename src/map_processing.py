@@ -44,7 +44,6 @@ class MapProcessing:
         for (f, l, r, b, qual, qual2), deg in self.input_data:
             coords_f = self.update_map(f, deg)
             coords_b = self.update_map(b, deg+180)
-            print(coords_f)
 
             #merge together with weights (front = 0.8, back = 0.5)
             merged_coords = [round((coords_f[0] * 0.8 + coords_b[0] * 0.5)/(0.8 + 0.5)), round((coords_f[1] * 0.8 + coords_b[1] * 0.5)/(0.8 + 0.5))]
@@ -366,6 +365,10 @@ class MapProcessing:
     def calculate_path_for_drone(self, path, drone_object):
         command_data = []
 
+        if path == None:
+            print("error, path not created")
+            return "not-found"
+
         path_list = list(path)
         for i, path_point in enumerate(path_list):
             if i == 0:
@@ -432,6 +435,7 @@ class Point:
 
 class Graph:
     def __init__(self, points, dest_points, drone_pos, lines):
+
         self.VERTICAL_PASS_COEF = 2
         self.MIN_POINT_DIST = 30
 
@@ -439,7 +443,7 @@ class Graph:
         self.points_labeled = []
 
         start_point_coord = drone_pos
-        end_point_coord = [round((dest_points[0][0] + dest_points[1][0])/2), round((dest_points[0][1] + dest_points[1][1])/2)]
+        end_point_coord = dest_points
         
         #self.start_point = Point(start_point_coord, 0)
         #self.end_point = Point(end_point_coord, 1)
@@ -548,15 +552,19 @@ class Graph:
 
         for point in self.points_labeled:
             cv2.circle(plot_img, point.coords, 8, (125, 125, 0), -1)
-            cv2.putText(plot_img, str(point.id), [point.coords[0] + 5, point.coords[1] - 5], font, fontScale, (255, 0, 0), 1, cv2.LINE_AA) 
+            if point.id != self.start_point.id and point.id != self.end_point.id:
+                cv2.putText(plot_img, str(point.id), [point.coords[0] + 5, point.coords[1] - 5], font, fontScale, (255, 0, 0), 1, cv2.LINE_AA) 
 
-            if point.id == self.start_point.id:
-                cv2.circle(plot_img, point.coords, 10, (0, 255, 0), -1) # start for green
-            if point.id == self.end_point.id:
-                cv2.circle(plot_img, point.coords, 10, (0, 0, 255), -1) # end for red
+        #start point
+        cv2.circle(plot_img, self.start_point.coords, 10, (0, 255, 0), -1) # start for green
+        cv2.putText(plot_img, 'Start point', (self.start_point.coords[0] + 10, self.start_point.coords[1] - 10), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
 
-        cv2.imshow("test", plot_img)
-        cv2.imshow("test_all", map_vis)
+        #end point
+        cv2.circle(plot_img, self.end_point.coords, 10, (0, 0, 255), -1) # end for red
+        cv2.putText(plot_img, 'End point', (self.end_point.coords[0] + 10, self.end_point.coords[1] - 10), font, fontScale, (0, 0, 0), thickness, cv2.LINE_AA)
+
+        cv2.imshow("plot_img", plot_img)
+        cv2.imshow("map_vis", map_vis)
         cv2.waitKey(0)
 
 def read_data(filename):
@@ -571,7 +579,7 @@ if __name__ == "__main__":
     #variables
     map_width = 1000
 
-    data = read_data("cafeteria.txt")
+    data = read_data("perfecto_room.txt")
 
     drone_last_pos = (round(map_width / 2), round(map_width / 2)) #TODO pak změň - teď je to default
     drone_angle = 0
