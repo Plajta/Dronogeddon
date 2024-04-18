@@ -577,35 +577,32 @@ class Graph:
         cv2.destroyWindow("map_vis")
         
     def matplotlib_plot(self, waypoints):
-        for point in waypoints:
-            print(point.leading_to)
-            print(point.id)
-            print(point.coords)
-            print("---")
-
         G = nx.Graph()
 
-        G.add_edge('a', 'b', weight=0.6)
-        G.add_edge('a', 'c', weight=0.2)
-        G.add_edge('c', 'd', weight=0.1)
-        G.add_edge('c', 'e', weight=0.7)
-        G.add_edge('c', 'f', weight=0.9)
-        G.add_edge('a', 'd', weight=0.3)
+        point_ids = []
+        for point in waypoints:
+            #add edge to this waypoint
+            if point.id == 78:
+                pass
 
-        elarge = [(u, v) for (u, v, d) in G.edges(data=True) if d['weight'] > 0.5]
-        esmall = [(u, v) for (u, v, d) in G.edges(data=True) if d['weight'] <= 0.5]
+            if len(point.leading_to) > 0:
+                point_ids.append(str(point.id))
+            
+            for leading_point in point.leading_to:
+                G.add_edge(str(point.id), str(leading_point.id))
 
         pos = nx.spring_layout(G)  # positions for all nodes
-
         # nodes
-        nx.draw_networkx_nodes(G, pos, node_size=700, nodelist=['e','f','b'])
-        nx.draw_networkx_nodes(G, pos, node_size=1400, nodelist=['c','a','d'], node_color='blue')
+        nx.draw_networkx_nodes(G, pos, node_size=700, nodelist=point_ids) #waypoints
+
+        if len(self.end_point.leading_to) > 0:
+            nx.draw_networkx_nodes(G, pos, node_size=1400, nodelist=[str(self.start_point.id), str(self.end_point.id)], node_color='blue') #start and stop points
+        else:
+            print("no connection found for destination")
+            nx.draw_networkx_nodes(G, pos, node_size=1400, nodelist=[str(self.start_point.id), str(point_ids[-1])], node_color='blue') 
 
         # edges
-        nx.draw_networkx_edges(G, pos, edgelist=elarge,
-                            width=6)
-        nx.draw_networkx_edges(G, pos, edgelist=esmall,
-                            width=6, alpha=0.5, edge_color='b', style='dashed')
+        nx.draw_networkx_edges(G, pos, width=6)
 
         # labels
         nx.draw_networkx_labels(G, pos, font_size=20, font_family='sans-serif')
