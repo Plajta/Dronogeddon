@@ -55,7 +55,22 @@ class MapProcessing:
 
             #self.write_to_vis(merged_coords, (0, 0, 0))
             #self.write_to_vis(coords_f, (0, 255, 0))
-            self.write_to_vis(coords_b, (255, 0, 0))
+            #self.write_to_vis(coords_b, (255, 0, 0))
+
+        data_dict: {int: {str: int}} = {}
+        deg_offsets = {'f': 360, 'l': 270, 'r': 450, 'b': 180}
+
+        for (f, l, r, b, qual, qual2), deg in self.input_data:
+            dists = {'f': f, 'l': l, 'r': r, 'b': b}
+            for key, offset in deg_offsets.items():
+                data_dict.setdefault((deg + offset) % 360, {})
+                value = data_dict[(deg + offset) % 360].get(key)
+                data_dict[(deg + offset) % 360][key] = dists[key] if value is None else (value + dists[key]) / 2
+
+        for deg, dists in data_dict.items():
+            dist = sum(dists.values()) / len(dists)
+            merged_coords = self.update_map(dist, deg)
+            #self.write_to_vis(merged_coords, (0, 0, 0))
 
         if self.debug_mode:
             cv2.imshow("test", self.map_vis)
@@ -370,7 +385,7 @@ class MapProcessing:
     def calculate_path_for_drone(self, path, drone_object):
         command_data = []
 
-        if path == None:
+        if path is None:
             print("error, path not created")
             return "not-found"
 
@@ -425,7 +440,7 @@ class MapProcessing:
 
         algorithm = CustomAStar()
         path = algorithm.astar(graph_obj.start_point, graph_obj.end_point)
-        if self.debug_mode and path != None:
+        if self.debug_mode and path is not None:
             algorithm.vis_path(path, graph_obj.points_labeled)
 
         path_data = self.calculate_path_for_drone(path, curr_drone)
@@ -631,3 +646,4 @@ if __name__ == "__main__":
     proc_instance = MapProcessing(inp_data=data, map_shape=(map_width, map_width), drone_pos=drone_last_pos,
                                   drone_angle=drone_angle, debug=debug)
     data = proc_instance.main()
+    
