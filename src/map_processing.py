@@ -70,7 +70,7 @@ class MapProcessing:
         for deg, dists in data_dict.items():
             dist = sum(dists.values()) / len(dists)
             merged_coords = self.update_map(dist, deg)
-            #self.write_to_vis(merged_coords, (0, 0, 0))
+            self.write_to_vis(merged_coords, (0, 0, 0))
 
         if self.debug_mode:
             cv2.imshow("test", self.map_vis)
