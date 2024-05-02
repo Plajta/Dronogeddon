@@ -24,6 +24,14 @@ color = (255, 0, 0)
 # Line thickness of 2 px 
 thickness = 2
 
+#for testing
+rho = 1
+theta_add = 180
+thresh = 50
+lines = None
+minLineLength = 25
+maxLineGap = 50
+
 class Drone:
     def __init__(self, drone_angle, drone_position):
         self.drone_angle = drone_angle
@@ -97,7 +105,15 @@ class MapProcessing:
         except IndexError as e:
             print(e)
 
-    def process_map(self, map_d):
+    def process_map(self, map_d, hough_args = []):
+        #Hough args are used for testing, they consist of:
+            # rho -> float
+            # theta -> float
+            # threshold -> int
+            # lines -> None
+            # minLineLength -> float
+            # maxLineGap -> float
+
         line_d = np.zeros(map_d.shape[:2], dtype=np.uint8)
 
         #Dilation
@@ -105,7 +121,10 @@ class MapProcessing:
         map_d_dilated = cv2.dilate(map_d, kernel, iterations=1).astype(np.uint8) * 255
         
         #HoughLines
-        linesParametric = cv2.HoughLinesP(map_d_dilated, 1, np.pi / 180, 50, None, 25, 50)
+        if len(hough_args) != 0:
+            linesParametric = cv2.HoughLinesP(map_d_dilated, *hough_args)
+        else:
+            linesParametric = cv2.HoughLinesP(map_d_dilated, 1, np.pi / 180, 50, None, 25, 50)
 
         if linesParametric is None:
             print("No borders found :(")
@@ -350,7 +369,7 @@ class MapProcessing:
         distances = []
         if len(points) == 0:
             print("Did not found any points, quitting because no destination was selected :(")
-            exit(0) #TODO
+            exit(0)
         elif len(points) == 1:
             return points[0]
         else:
@@ -446,6 +465,42 @@ class MapProcessing:
 
         path_data = self.calculate_path_for_drone(path, curr_drone)
         return path_data
+    
+    def test(self):
+        def on_trackbar(idx, value):
+            global rho, theta_add, thresh, lines, minLineLength, maxLineGap
+
+            if idx == 0:
+                rho = value
+            elif idx == 1:
+                theta_add = value
+            elif idx == 2:
+                thresh = value
+            elif idx == 3:
+                lines = value
+            elif idx == 4:
+                minLineLength = value
+            elif idx == 5:
+                maxLineGap = value
+
+            self.process_map(self.map_data, [rho, np.pi / theta_add, thresh, lines, minLineLength, maxLineGap])
+
+        self.process_map(self.map_data)
+
+        cv2.namedWindow('test-win')
+
+        # Create a trackbar
+        cv2.createTrackbar('rho', 'test-win', rho, 10, lambda value, idx = 0: on_trackbar(idx, value))
+        cv2.createTrackbar('theta', 'test-win', theta_add, 360, lambda value, idx = 1: on_trackbar(idx, value))
+        cv2.createTrackbar('thresh', 'test-win', thresh, 255, lambda value, idx = 2: on_trackbar(idx, value))
+        cv2.createTrackbar('minLineLength', 'test-win', minLineLength, 150, lambda value, idx = 3: on_trackbar(idx, value))
+        cv2.createTrackbar('maxLineGap', 'test-win', maxLineGap, 150, lambda value, idx = 4: on_trackbar(idx, value))
+
+        while True:
+            cv2.imshow('test-win', self.map_vis)
+            k = cv2.waitKey(1) & 0xFF
+            if k == 27:  # Escape key to exit
+                break
 
 class Point:
     def __init__(self, coords, id):
@@ -633,10 +688,9 @@ def read_data(filename):
 
     return data
 
-#TODO: možná časem rewrite získávání room openings místo obrazových dat
 if __name__ == "__main__":
     #variables
-    map_width = 1000
+    map_width = 700
 
     data = read_data("perfecto_room.txt")
 
@@ -646,5 +700,5 @@ if __name__ == "__main__":
 
     proc_instance = MapProcessing(inp_data=data, map_shape=(map_width, map_width), drone_pos=drone_last_pos,
                                   drone_angle=drone_angle, debug=debug)
-    data = proc_instance.main()
-    
+    #data = proc_instance.main()
+    proc_instance.test()
