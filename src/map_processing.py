@@ -31,7 +31,7 @@ class Drone:
 
 class MapProcessing:
     def __init__(self, inp_data, map_shape, drone_pos, drone_angle, debug):
-        self.tmp_map = np.zeros((1200, 1200), dtype=np.uint8)
+        self.tmp_map = np.zeros((map_shape), dtype=np.uint8)
         self.corners = []
         self.input_data = inp_data
         self.map_width = map_shape[0]
@@ -48,14 +48,6 @@ class MapProcessing:
         for (f, l, r, b, qual, qual2), deg in self.input_data:
             coords_f = self.update_map(f, deg)
             coords_b = self.update_map(b, deg+180)
-
-            #TODO
-            #merge together with weights (front = 0.8, back = 0.5)
-            #merged_coords = [round((coords_f[0] * 0.8 + coords_b[0] * 0.5)/(0.8 + 0.5)), round((coords_f[1] * 0.8 + coords_b[1] * 0.5)/(0.8 + 0.5))]
-
-            #self.write_to_vis(merged_coords, (0, 0, 0))
-            #self.write_to_vis(coords_f, (0, 255, 0))
-            #self.write_to_vis(coords_b, (255, 0, 0))
 
         data_dict: {int: {str: int}} = {}
         deg_offsets = {'f': 360, 'l': 270, 'r': 450, 'b': 180}
@@ -91,7 +83,6 @@ class MapProcessing:
         self.map_vis = cv2.line(self.map_vis, (xstart, ystart), (xstart+length, ystart), color, 1)
         self.map_vis = cv2.line(self.map_vis, (xstart, ystart-10), (xstart, ystart+10), color, 1)
         self.map_vis = cv2.line(self.map_vis, (xstart+length, ystart-10), (xstart+length, ystart+10), color, 1)
-        pass
 
     def update_map(self, dist, curr_angle):
         xpos = np.cos(-curr_angle/180*np.pi)*dist/2 + self.map_width/2
@@ -114,21 +105,31 @@ class MapProcessing:
         map_d_dilated = cv2.dilate(map_d, kernel, iterations=1).astype(np.uint8) * 255
         
         #HoughLines
-        linesP = cv2.HoughLinesP(map_d_dilated, 1, np.pi / 180, 50, None, 25, 50)
-        if linesP is not None:
-            for i in range(0, len(linesP)):
-                l = linesP[i][0]
-                cv2.line(self.map_vis, (l[0], l[1]), (l[2], l[3]), (0,0,255), 3, cv2.LINE_AA)
-                cv2.line(line_d, (l[0], l[1]), (l[2], l[3]), 255, 3, cv2.LINE_AA)
+        linesParametric = cv2.HoughLinesP(map_d_dilated, 1, np.pi / 180, 50, None, 25, 50)
+
+        if linesParametric is None:
+            print("No borders found :(")
+            exit(0)
+
+        #what (TODO)
+        linesP = []
+        for i in range(len(linesParametric)):
+            line = linesParametric[i][0]
+            linesP.append([line[1], line[0], line[3], line[2]])
+
+        for i in range(0, len(linesP)):
+            l = linesP[i]
+            cv2.line(self.map_vis, (l[0], l[1]), (l[2], l[3]), (0,0,255), 3, cv2.LINE_AA)
+            cv2.line(line_d, (l[0], l[1]), (l[2], l[3]), 255, 3, cv2.LINE_AA)
 
         points = []
 
         #Get Extremes
         for line in linesP:
-            x1 = line[0][0]
-            y1 = line[0][1]
-            x2 = line[0][2]
-            y2 = line[0][3]
+            x1 = line[0]
+            y1 = line[1]
+            x2 = line[2]
+            y2 = line[3]
 
             points.append([x1, y1])
             points.append([x2, y2])
@@ -637,7 +638,7 @@ if __name__ == "__main__":
     #variables
     map_width = 1000
 
-    data = read_data("cafeteria.txt")
+    data = read_data("perfecto_room.txt")
 
     drone_last_pos = (round(map_width / 2), round(map_width / 2)) #TODO pak změň - teď je to default
     drone_angle = 0
