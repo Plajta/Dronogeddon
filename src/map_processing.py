@@ -107,7 +107,7 @@ class MapProcessing:
         except IndexError as e:
             print(e)
 
-    def process_map(self, map_d, hough_args = []):
+    def process_map(self, map_d, hough_args=[]):
         #Hough args are used for testing, they consist of:
             # rho -> float
             # theta -> float
@@ -494,7 +494,9 @@ class MapProcessing:
 
         # Create a trackbar
         cv2.createTrackbar('rho', 'test-win', rho, 10, lambda value, idx = 0: on_trackbar(idx, value))
+        cv2.setTrackbarMin('rho', 'test-win', 1)
         cv2.createTrackbar('theta', 'test-win', theta_add, 360, lambda value, idx = 1: on_trackbar(idx, value))
+        cv2.setTrackbarMin('theta', 'test-win', 1)
         cv2.createTrackbar('thresh', 'test-win', thresh, 255, lambda value, idx = 2: on_trackbar(idx, value))
         cv2.createTrackbar('minLineLength', 'test-win', minLineLength, 150, lambda value, idx = 3: on_trackbar(idx, value))
         cv2.createTrackbar('maxLineGap', 'test-win', maxLineGap, 150, lambda value, idx = 4: on_trackbar(idx, value))
