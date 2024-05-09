@@ -72,6 +72,8 @@ class MapProcessing:
             merged_coords = self.update_map(dist, deg)
             self.write_to_vis(merged_coords, (0, 0, 0))
 
+        self.tmp_map = self.map_vis.copy()
+
         if self.debug_mode:
             cv2.imshow("test", self.map_vis)
             cv2.waitKey(0)
@@ -469,6 +471,7 @@ class MapProcessing:
     def test(self):
         def on_trackbar(idx, value):
             global rho, theta_add, thresh, lines, minLineLength, maxLineGap
+            self.map_vis = self.tmp_map.copy()
 
             if idx == 0:
                 rho = value
