@@ -509,8 +509,8 @@ class MapProcessing:
         cv2.setTrackbarMin('theta', 'test-win', 1)
         cv2.createTrackbar('thresh', 'test-win', thresh, 255, lambda value, idx=2: on_trackbar(idx, value))
         cv2.createTrackbar('minLineLength', 'test-win', minLineLength, 150,
-                           lambda value, idx=3: on_trackbar(idx, value))
-        cv2.createTrackbar('maxLineGap', 'test-win', maxLineGap, 150, lambda value, idx=4: on_trackbar(idx, value))
+                           lambda value, idx=4: on_trackbar(idx, value))
+        cv2.createTrackbar('maxLineGap', 'test-win', maxLineGap, 150, lambda value, idx=5: on_trackbar(idx, value))
 
         while True:
             cv2.imshow('test-win', self.map_vis)
