@@ -474,6 +474,9 @@ class MapProcessing:
         return path_data
 
     def test(self):
+        def save():
+            print("balls")
+
         def on_trackbar(idx, value):
             global rho, theta_add, thresh, lines, minLineLength, maxLineGap
             self.map_vis = self.tmp_map.copy()
@@ -496,6 +499,8 @@ class MapProcessing:
         self.process_map(self.map_data)
 
         cv2.namedWindow('test-win')
+        cv2.createButton("ur mom", save)
+        cv2.createButton("ur mom 2", save)
 
         # Create a trackbar
         cv2.createTrackbar('rho', 'test-win', rho, 10, lambda value, idx=0: on_trackbar(idx, value))
