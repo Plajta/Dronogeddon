@@ -39,3 +39,7 @@ secret.yaml
 
 #tests
 /src/test
+
+#temp
+image.png
+image2.png
