@@ -12,16 +12,16 @@ import networkx as nx
 
 from CustomAStar import CustomAStar
 
-# font 
+# font
 font = cv2.FONT_HERSHEY_SIMPLEX
 
-# fontScale 
+# fontScale
 fontScale = 1
 
-# Blue color in BGR 
+# Blue color in BGR
 color = (255, 0, 0)
 
-# Line thickness of 2 px 
+# Line thickness of 2 px
 thickness = 2
 
 # for testing
@@ -61,6 +61,7 @@ class MapProcessing:
 
         data_dict: {int: {str: int}} = {}
         deg_offsets = {'f': 360, 'l': 270, 'r': 450, 'b': 180}
+        # deg_offsets = {'f': 360, 'b': 180}
 
         for (f, l, r, b, qual, qual2), deg in self.input_data:
             dists = {'f': f, 'l': l, 'r': r, 'b': b}
@@ -538,7 +539,7 @@ class Graph:
         self.points_labeled = []
 
         start_point_coord = drone_pos
-        end_point_coord = dest_points
+        end_point_coord = [round((dest_points[0][0] + dest_points[1][0])/2), round((dest_points[0][1] + dest_points[1][1])/2)]
 
         # self.start_point = Point(start_point_coord, 0)
         # self.end_point = Point(end_point_coord, 1)
@@ -560,15 +561,14 @@ class Graph:
             if len(points_copy) == 0:
                 break
 
-            point = points_copy[0]
-            points_copy.pop(0)
+            point = points_copy.pop(0)
             for point2 in points_copy:
                 collision = False
                 point_path = [point, point2]
 
                 # iterate on every line to check colision
                 for line in lines:
-                    line_path = [line[0][:2].tolist(), line[0][2:].tolist()]
+                    line_path = [line[:2], line[2:]]
 
                     collision = self.__check_for_collision__(point_path, line_path)
                     if collision:
@@ -602,13 +602,13 @@ class Graph:
     def __check_orientation__(self, p, q, r):
         val = (float(q[1] - p[1]) * (r[0] - q[0])) - (float(q[0] - p[0]) * (r[1] - q[1]))
         if (val > 0):
-            # Clockwise orientation 
+            # Clockwise orientation
             return 1
         elif (val < 0):
-            # Counterclockwise orientation 
+            # Counterclockwise orientation
             return 2
         else:
-            # Collinear orientation 
+            # Collinear orientation
             return 0
 
     def __check_for_collision__(self, line_1, line_2):
@@ -617,29 +617,29 @@ class Graph:
         o3 = self.__check_orientation__(line_2[0], line_2[1], line_1[0])
         o4 = self.__check_orientation__(line_2[0], line_2[1], line_1[1])
 
-        # General case 
+        # General case
         if ((o1 != o2) and (o3 != o4)):
             return True
 
-        # Special Cases 
+        # Special Cases
 
-        # p1 , q1 and p2 are collinear and p2 lies on segment p1q1 
+        # p1 , q1 and p2 are collinear and p2 lies on segment p1q1
         if ((o1 == 0) and self.__check_segment__(line_1[0], line_2[0], line_1[1])):
             return True
 
-        # p1 , q1 and q2 are collinear and q2 lies on segment p1q1 
+        # p1 , q1 and q2 are collinear and q2 lies on segment p1q1
         if ((o2 == 0) and self.__check_segment__(line_1[0], line_2[1], line_1[1])):
             return True
 
-        # p2 , q2 and p1 are collinear and p1 lies on segment p2q2 
+        # p2 , q2 and p1 are collinear and p1 lies on segment p2q2
         if ((o3 == 0) and self.__check_segment__(line_2[0], line_1[0], line_2[1])):
             return True
 
-        # p2 , q2 and q1 are collinear and q1 lies on segment p2q2 
+        # p2 , q2 and q1 are collinear and q1 lies on segment p2q2
         if ((o4 == 0) and self.__check_segment__(line_2[0], line_1[1], line_2[1])):
             return True
 
-        # If none of the cases 
+        # If none of the cases
         return False
 
     def test_plot(self, map_width, map_vis):
@@ -726,5 +726,5 @@ if __name__ == "__main__":
 
     proc_instance = MapProcessing(inp_data=data, map_shape=(map_width, map_width), drone_pos=drone_last_pos,
                                   drone_angle=drone_angle, debug=debug)
-    # data = proc_instance.main()
-    proc_instance.test()
+    data = proc_instance.main()
+    # proc_instance.test()
