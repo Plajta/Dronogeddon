@@ -77,17 +77,17 @@ class Window:
         label = tk.Label(self.win, text=text)
         label.grid(row=abs_coords[1], column=abs_coords[0])
 
-    def createViewbox(self, coords, img_source="blank"):
+    def createViewbox(self, coords, size, img_source="blank"):
         abs_coords = (coords[0], coords[1] + 1)
 
         if img_source == "blank":
-            img_pil = Image.new("RGB", (400, 400))
+            img_pil = Image.new("RGB", size)
         else:
             #convert cv2 to PIL
             b, g, r = cv2.split(img_source)
             img = cv2.merge((r, g, b))
             img_pil = Image.fromarray(img)
-            img_pil = img_pil.resize((400, 400))
+            img_pil = img_pil.resize(size)
 
         img_gui = ImageTk.PhotoImage(img_pil)
 
@@ -99,12 +99,12 @@ class Window:
 
         return viewbox
 
-    def updateViewbox(self, viewbox, img_source):
+    def updateViewbox(self, viewbox, viewbox_size, img_source):
         #convert cv2 to PIL
         b, g, r = cv2.split(img_source)
         img = cv2.merge((r, g, b))
         img_pil = Image.fromarray(img)
-        img_pil = img_pil.resize((400, 400))
+        img_pil = img_pil.resize(viewbox_size)
 
         img_gui = ImageTk.PhotoImage(image=img_pil)
 
@@ -114,12 +114,13 @@ class Window:
 if __name__ == "__main__":
     
     vid = cv2.VideoCapture(0) 
+    viewbox_size = (500, 500)
     def get_camera(): #just an example function
         ret, frame = vid.read()
-        window.updateViewbox(viewbox, frame)
+        window.updateViewbox(viewbox, viewbox_size, frame)
 
     window = Window("Testing window", dim=(1000, 1000))
-    viewbox = window.createViewbox((0, 0))
+    viewbox = window.createViewbox((0, 0), viewbox_size)
     window.createTrackbar((0, 1), "Test", length=250, range=(0, 150), onchange=lambda x: None)
     window.createLabel((0, 2), "Test dva")
     window.createButton((0, 3), "click me!", onclick=lambda: None)
