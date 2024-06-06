@@ -4,7 +4,7 @@ import cv2
 import threading
 import time
 
-#some class definitions
+#main window class definition
 class Window:
     def __init__(self, win_name, dim=[700, 700]):
         self.win = tk.Tk()
@@ -30,7 +30,7 @@ class Window:
         you don't have to retype window checking every time.
         """
 
-        while not window.win_closed:
+        while not self.win_closed:
             target()
             if delay != None:
                 time.sleep(delay)
@@ -65,11 +65,15 @@ class Window:
         scale_text.grid(row=abs_coords[1], column=abs_coords[0])
         scale.grid(row=abs_coords[1], column=abs_coords[0] + 1)
 
+        return scale
+
     def createButton(self, coords, label, onclick):
         abs_coords = (coords[0], coords[1] + 1)
 
         button = tk.Button(self.win, text=label, command=onclick)
         button.grid(row=abs_coords[1], column=abs_coords[0])
+
+        return button
 
     def createLabel(self, coords, text):
         abs_coords = (coords[0], coords[1] + 1)
@@ -77,7 +81,13 @@ class Window:
         label = tk.Label(self.win, text=text)
         label.grid(row=abs_coords[1], column=abs_coords[0])
 
-    def createViewbox(self, coords, size, img_source="blank"):
+        return label
+
+    def createViewbox(self, coords, end_coords, size, img_source="blank"):
+        """
+            Create viewbox for image to render
+        """
+
         abs_coords = (coords[0], coords[1] + 1)
 
         if img_source == "blank":
@@ -92,7 +102,7 @@ class Window:
         img_gui = ImageTk.PhotoImage(img_pil)
 
         viewbox = tk.Label(self.win)
-        viewbox.grid(row=abs_coords[1], column=abs_coords[0])
+        viewbox.grid(row=abs_coords[1], column=abs_coords[0], rowspan=(end_coords[0] - coords[0]) + 1, columnspan=(end_coords[1] - coords[1]) + 1)
 
         viewbox.configure(image=img_gui)
         viewbox.image = img_gui
@@ -111,21 +121,28 @@ class Window:
         viewbox.configure(image=img_gui)
         viewbox.image = img_gui
 
+#Examples definitons
+class OpencvCamera:
+    def __init__(self):
+        vid = cv2.VideoCapture(0)
+        y = vid.read()[1].shape[0]
+        x = vid.read()[1].shape[1]
+        viewbox_size = [x, y]
+
+        def get_camera(): #just an example function
+            ret, frame = vid.read()
+            window.updateViewbox(viewbox, viewbox_size, frame)
+
+        window = Window("Testing window", dim=(viewbox_size[0] + 100, 800))
+        viewbox = window.createViewbox((0, 0), (0, 1), viewbox_size)
+        window.createTrackbar((0, 1), "Test", length=250, range=(0, 150), onchange=lambda x: None)
+        window.createLabel((0, 2), "Test dva")
+        window.createButton((0, 3), "click me!", onclick=lambda: None)
+
+        window.set_thread(get_camera, delay=None)
+        window.run_threads()
+
+        window.win_mainloop()
+
 if __name__ == "__main__":
-    
-    vid = cv2.VideoCapture(0) 
-    viewbox_size = (500, 500)
-    def get_camera(): #just an example function
-        ret, frame = vid.read()
-        window.updateViewbox(viewbox, viewbox_size, frame)
-
-    window = Window("Testing window", dim=(1000, 1000))
-    viewbox = window.createViewbox((0, 0), viewbox_size)
-    window.createTrackbar((0, 1), "Test", length=250, range=(0, 150), onchange=lambda x: None)
-    window.createLabel((0, 2), "Test dva")
-    window.createButton((0, 3), "click me!", onclick=lambda: None)
-
-    window.set_thread(get_camera, delay=None)
-    window.run_threads()
-
-    window.win_mainloop()
+    OpencvCamera()
