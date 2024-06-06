@@ -60,8 +60,8 @@ class MapProcessing:
             coords_b = self.update_map(b, deg + 180)
 
         data_dict: {int: {str: int}} = {}
-        deg_offsets = {'f': 360, 'l': 270, 'r': 450, 'b': 180}
-        # deg_offsets = {'f': 360, 'b': 180}
+        # deg_offsets = {'f': 360, 'l': 270, 'r': 450, 'b': 180}
+        deg_offsets = {'f': 360}
 
         for (f, l, r, b, qual, qual2), deg in self.input_data:
             dists = {'f': f, 'l': l, 'r': r, 'b': b}
@@ -132,7 +132,7 @@ class MapProcessing:
         if len(hough_args) != 0:
             linesParametric = cv2.HoughLinesP(map_d_dilated, *hough_args)
         else:
-            linesParametric = cv2.HoughLinesP(map_d_dilated, 1, np.pi / 180, 50, None, 25, 50)
+            linesParametric = cv2.HoughLinesP(map_d_dilated, 1, np.pi / 180, 50, None, 50, 40)
 
         if linesParametric is None:
             print("No borders found :(")
@@ -378,28 +378,19 @@ class MapProcessing:
     def find_openings_using_lowest_distance(self, points):
         distances = []
         if len(points) == 0:
-            print("Did not found any points, quitting because no destination was selected :(")
+            print("Did not find any points, quitting because no destination was selected :(")
             exit(0)
         elif len(points) == 1:
             return points[0]
         else:
             points_copy = points.copy()
-            for point in points_copy:
-                points_copy.pop(0)
+            while len(points_copy):
+                point = points_copy.pop(0)
                 for point_copy in points_copy:
                     c = round(math.sqrt(abs(point[0] - point_copy[0]) ** 2 + abs(point[1] - point_copy[1]) ** 2), 2)
                     distances.append([c, point, point_copy])
 
-            min_num = 0
-            curr_i = 0
-            for i, dist in enumerate(distances):
-                if i == 0:
-                    min_num = dist[0]
-
-                if dist[0] <= min_num:
-                    curr_i = i
-
-            return distances[curr_i][1:]
+            return min(distances, key=lambda x: x[0])[1:]
 
     def filter_points(self, points):
         # to filter out all points that are duplicit
