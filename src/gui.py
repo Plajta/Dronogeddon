@@ -27,13 +27,13 @@ class Window:
 
     def gui_function(self, target, delay):
         """
-        Just a function to encapsulate target function so 
+        Just a function to encapsulate target function so
         you don't have to retype window checking every time.
         """
 
         while not self.win_closed:
             target()
-            if delay != None:
+            if delay is not None:
                 time.sleep(delay)
 
     def close(self):
@@ -62,7 +62,13 @@ class Window:
         abs_coords = (coords[0], coords[1] + 1)
 
         scale_text = tk.Label(self.win, text=label)
-        scale = tk.Scale(self.win, variable=self.scale_var, from_=range[0], to=range[1], orient=tk.HORIZONTAL, length=length, command=onchange)
+        scale = tk.Scale(self.win,
+                         variable=self.scale_var,
+                         from_=range[0],
+                         to=range[1],
+                         orient=tk.HORIZONTAL,
+                         length=length,
+                         command=onchange)
         scale_text.grid(row=abs_coords[1], column=abs_coords[0])
         scale.grid(row=abs_coords[1], column=abs_coords[0] + 1)
 
@@ -94,7 +100,7 @@ class Window:
         if img_source == "blank":
             img_pil = Image.new("RGB", size)
         else:
-            #convert cv2 to PIL
+            # convert cv2 to PIL
             b, g, r = cv2.split(img_source)
             img = cv2.merge((r, g, b))
             img_pil = Image.fromarray(img)
@@ -103,7 +109,10 @@ class Window:
         img_gui = ImageTk.PhotoImage(img_pil)
 
         viewbox = tk.Label(self.win)
-        viewbox.grid(row=abs_coords[1], column=abs_coords[0], rowspan=(end_coords[0] - coords[0]) + 1, columnspan=(end_coords[1] - coords[1]) + 1)
+        viewbox.grid(row=abs_coords[1],
+                     column=abs_coords[0],
+                     rowspan=(end_coords[0] - coords[0]) + 1,
+                     columnspan=(end_coords[1] - coords[1]) + 1)
 
         viewbox.configure(image=img_gui)
         viewbox.image = img_gui
