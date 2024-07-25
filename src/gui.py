@@ -4,19 +4,20 @@ import cv2
 import threading
 import time
 
-#main window class definition
+
+# main window class definition
 class Window:
     def __init__(self, win_name, dim=[700, 700]):
         self.win = tk.Tk()
         self.dimension = dim
         self.win.geometry(f"{dim[0]}x{dim[1]}")
 
-        #variables
+        # variables
         self.scale_var = tk.DoubleVar()
         self.thread_processes = []
         self.win_closed = False
 
-        #initial gui setup
+        # initial gui setup
         label = tk.Label(self.win, text=win_name)
         label.grid(row=0, column=0, columnspan=1)
 
@@ -56,7 +57,7 @@ class Window:
                 # Threads should exit cleanly as win_closed is checked in the loop
                 pass
 
-    #functions for element creation
+    # functions for element creation
     def createTrackbar(self, coords, label, length, onchange, range=[0, 100]):
         abs_coords = (coords[0], coords[1] + 1)
 
@@ -110,7 +111,7 @@ class Window:
         return viewbox
 
     def updateViewbox(self, viewbox, viewbox_size, img_source):
-        #convert cv2 to PIL
+        # convert cv2 to PIL
         b, g, r = cv2.split(img_source)
         img = cv2.merge((r, g, b))
         img_pil = Image.fromarray(img)
@@ -121,28 +122,47 @@ class Window:
         viewbox.configure(image=img_gui)
         viewbox.image = img_gui
 
-#Examples definitons
+
+# Examples definitons
 class OpencvCamera:
     def __init__(self):
-        vid = cv2.VideoCapture(0)
-        y = vid.read()[1].shape[0]
-        x = vid.read()[1].shape[1]
-        viewbox_size = [x, y]
+        #
+        # Setup function
+        #
 
-        def get_camera(): #just an example function
-            ret, frame = vid.read()
-            window.updateViewbox(viewbox, viewbox_size, frame)
+        self.vid = cv2.VideoCapture(0)
+        y = self.vid.read()[1].shape[0]
+        x = self.vid.read()[1].shape[1]
+        self.viewbox_size = [x, y]
+        ret, self.frame_glob = self.vid.read()
 
-        window = Window("Testing window", dim=(viewbox_size[0] + 100, 800))
-        viewbox = window.createViewbox((0, 0), (0, 1), viewbox_size)
-        window.createTrackbar((0, 1), "Test", length=250, range=(0, 150), onchange=lambda x: None)
-        window.createLabel((0, 2), "Test dva")
-        window.createButton((0, 3), "click me!", onclick=lambda: None)
+        self.window = Window("Testing window", dim=(self.viewbox_size[0] + 100, 800))
+        self.viewbox = self.window.createViewbox((0, 0), (0, 1), self.viewbox_size)
+        self.window.createTrackbar((0, 1), "Test", length=250, range=(0, 150), onchange=lambda x: self.on_trackbar(x))
+        self.window.createLabel((0, 2), "Test dva")
+        self.window.createButton((0, 3), "click me!", onclick=self.on_button)
 
-        window.set_thread(get_camera, delay=None)
-        window.run_threads()
+        self.window.set_thread(self.get_camera, delay=None)
 
-        window.win_mainloop()
+    def get_camera(self): # just an example function
+        ret, self.frame_glob = self.vid.read()
+        self.window.updateViewbox(self.viewbox, self.viewbox_size, self.frame_glob)
+
+    def on_button(self):
+        print("On button")
+
+    def on_trackbar(self, data):
+        print(data)
+
+    def run(self):
+        #
+        # Run function which runs in loop
+        #
+
+        self.window.run_threads()
+        self.window.win_mainloop()
+
 
 if __name__ == "__main__":
-    OpencvCamera()
+    win = OpencvCamera()
+    win.run()
