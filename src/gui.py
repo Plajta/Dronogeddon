@@ -57,8 +57,13 @@ class Window:
                 # Threads should exit cleanly as win_closed is checked in the loop
                 pass
 
+    def _trackbar_callback(self, change, change_callback, change_variable):
+        if change_callback is not None:
+            change_callback(float(change))
+        change_variable = float(change)
+
     # functions for element creation
-    def createTrackbar(self, coords, label, length, onchange, range=[0, 100]):
+    def createTrackbar(self, coords, label, length, change_variable, range=[0, 100], step=10, onchange=None):
         abs_coords = (coords[0], coords[1] + 1)
 
         scale_text = tk.Label(self.win, text=label)
@@ -68,7 +73,8 @@ class Window:
                          to=range[1],
                          orient=tk.HORIZONTAL,
                          length=length,
-                         command=onchange)
+                         resolution=step,
+                         command=lambda x: self._trackbar_callback(x, onchange, change_variable))
         scale_text.grid(row=abs_coords[1], column=abs_coords[0])
         scale.grid(row=abs_coords[1], column=abs_coords[0] + 1)
 
@@ -145,9 +151,14 @@ class OpencvCamera:
         self.viewbox_size = [x, y]
         ret, self.frame_glob = self.vid.read()
 
-        self.window = Window("Testing window", dim=(self.viewbox_size[0] + 100, 800))
+        self.alpha = 0.5
+        self.beta = 10
+
+        self.window = Window("Testing window", dim=(self.viewbox_size[0], 800))
+
         self.viewbox = self.window.createViewbox((0, 0), (0, 1), self.viewbox_size)
-        self.window.createTrackbar((0, 1), "Test", length=250, range=(0, 150), onchange=lambda x: self.on_trackbar(x))
+        self.window.createTrackbar((0, 1), "Alpha", length=100, range=(0, 1.5), step=0.05, change_variable=self.alpha)
+        self.window.createTrackbar((0, 2), "Beta", length=100, range=(0, 100), step=10, change_variable=self.beta)
         self.window.createLabel((0, 2), "Test dva")
         self.window.createButton((0, 3), "click me!", onclick=self.on_button)
 
@@ -155,13 +166,13 @@ class OpencvCamera:
 
     def get_camera(self): # just an example function
         ret, self.frame_glob = self.vid.read()
+
+        self.frame_glob = cv2.convertScaleAbs(self.frame_glob, alpha=self.alpha, beta=self.beta)
+
         self.window.updateViewbox(self.viewbox, self.viewbox_size, self.frame_glob)
 
     def on_button(self):
         print("On button")
-
-    def on_trackbar(self, data):
-        print(data)
 
     def run(self):
         #
