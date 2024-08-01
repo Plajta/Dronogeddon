@@ -57,13 +57,13 @@ class Window:
                 # Threads should exit cleanly as win_closed is checked in the loop
                 pass
 
-    def _trackbar_callback(self, change, change_callback, change_variable):
-        if change_callback is not None:
-            change_callback(float(change))
-        change_variable = float(change)
+    def _trackbar_callback(self, callback, x):
+        if isinstance(x, str): # NOTE: there seems to be some kind of bug that refactors float to str
+            x = float(x)
+            callback(x)
 
     # functions for element creation
-    def createTrackbar(self, coords, label, length, change_variable, range=[0, 100], step=10, onchange=None):
+    def createTrackbar(self, coords, label, length, onchange, default=0, range=[0, 100], step=10):
         abs_coords = (coords[0], coords[1] + 1)
 
         scale_text = tk.Label(self.win, text=label)
@@ -74,7 +74,8 @@ class Window:
                          orient=tk.HORIZONTAL,
                          length=length,
                          resolution=step,
-                         command=lambda x: self._trackbar_callback(x, onchange, change_variable))
+                         command=lambda x: self._trackbar_callback(onchange, x))
+        scale.set(default)
         scale_text.grid(row=abs_coords[1], column=abs_coords[0])
         scale.grid(row=abs_coords[1], column=abs_coords[0] + 1)
 
@@ -157,15 +158,23 @@ class OpencvCamera:
         self.window = Window("Testing window", dim=(self.viewbox_size[0], 800))
 
         self.viewbox = self.window.createViewbox((0, 0), (0, 1), self.viewbox_size)
-        self.window.createTrackbar((0, 1), "Alpha", length=100, range=(0, 1.5), step=0.05, change_variable=self.alpha)
-        self.window.createTrackbar((0, 2), "Beta", length=100, range=(0, 100), step=10, change_variable=self.beta)
+        self.window.createTrackbar((0, 1), "Alpha", length=100, range=(0, 1.5), default=self.alpha, step=0.05, onchange=self.change_alpha)
+        self.window.createTrackbar((0, 2), "Beta", length=100, range=(0, 100), default=self.beta, step=10, onchange=self.change_beta)
         self.window.createLabel((0, 2), "Test dva")
         self.window.createButton((0, 3), "click me!", onclick=self.on_button)
 
         self.window.set_thread(self.get_camera, delay=None)
 
+    def change_alpha(self, alpha):
+        self.alpha = alpha
+
+    def change_beta(self, beta):
+        self.beta = beta
+
     def get_camera(self): # just an example function
         ret, self.frame_glob = self.vid.read()
+
+        print(type(self.alpha), self.alpha)
 
         self.frame_glob = cv2.convertScaleAbs(self.frame_glob, alpha=self.alpha, beta=self.beta)
 
